@@ -2,7 +2,8 @@ import { useState } from "react";
 import { X, EyeOff, Eye, Upload } from "lucide-react";
 import GoogleIcon from "../../images/GoogleIcon";
 import LinkedInIcon from "../../images/LinkedInIcon";
-import InputField from "../InputField";
+import InputField from "../fields_hooks/InputField";
+import useScrollLock from "../fields_hooks/useScrollLock";
 
 const SignUp = ({ onClose, onLoginClick }) => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,8 @@ const SignUp = ({ onClose, onLoginClick }) => {
     confirmPassword: "",
     role: "EMPLOYEE",
   });
+
+  useScrollLock(true);
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -184,22 +187,22 @@ const SignUp = ({ onClose, onLoginClick }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-[32rem] relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 backdrop-blur-[3px] bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-surface p-8 rounded-lg shadow-lg w-[32rem] relative max-h-[90vh] overflow-y-auto">
         <button
-          className="absolute top-4 right-4 text-gray-600 hover:text-black"
+          className="absolute top-4 right-4 text-text-tertiary hover:text-text-primary"
           onClick={onClose}
         >
           <X />
         </button>
 
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-blue-600 mb-2">
-            <span className="font-bold bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold mb-2">
+            <span className="font-bold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
               CareerVista
             </span>
           </h1>
-          <p className="text-gray-600">
+          <p className="text-text-secondary">
             Create an account to start your professional journey
           </p>
         </div>
@@ -270,14 +273,14 @@ const SignUp = ({ onClose, onLoginClick }) => {
           <div>
             <label
               htmlFor="address"
-              className="block text-sm mb-1 font-medium text-gray-700"
+              className="block text-sm mb-1 font-medium text-text-primary"
             >
               Address (Optional)
             </label>
             <textarea
               id="address"
               name="address"
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Enter your address"
               value={formData.address}
               onChange={handleInputChange}
@@ -288,14 +291,14 @@ const SignUp = ({ onClose, onLoginClick }) => {
           <div>
             <label
               htmlFor="gender"
-              className="block text-sm mb-1 font-medium text-gray-700"
+              className="block text-sm mb-1 font-medium text-text-primary"
             >
               Gender *
             </label>
             <select
               id="gender"
               name="gender"
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               value={formData.gender}
               onChange={handleInputChange}
               required
@@ -309,13 +312,15 @@ const SignUp = ({ onClose, onLoginClick }) => {
           <div>
             <label
               htmlFor="resume"
-              className="block text-sm mb-1 font-medium text-gray-700"
+              className="block text-sm mb-1 font-medium text-text-primary"
             >
               Resume (PDF) *
             </label>
             <div
               className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${
-                dragActive ? "border-blue-400 bg-blue-50" : "border-gray-300"
+                dragActive
+                  ? "border-primary-400 bg-primary-50"
+                  : "border-border"
               } border-dashed rounded-md relative`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -325,13 +330,13 @@ const SignUp = ({ onClose, onLoginClick }) => {
               <div className="space-y-1 text-center">
                 <Upload
                   className={`mx-auto h-12 w-12 ${
-                    dragActive ? "text-blue-400" : "text-gray-400"
+                    dragActive ? "text-primary-400" : "text-text-muted"
                   }`}
                 />
-                <div className="flex text-sm text-gray-600">
+                <div className="flex text-sm text-text-secondary">
                   <label
                     htmlFor="resume"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                    className="relative cursor-pointer bg-surface rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
                   >
                     <span>Upload a file</span>
                     <input
@@ -346,17 +351,17 @@ const SignUp = ({ onClose, onLoginClick }) => {
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-gray-500">PDF up to 10MB</p>
+                <p className="text-xs text-text-muted">PDF up to 10MB</p>
                 {uploading && (
-                  <p className="text-sm text-blue-500">Uploading...</p>
+                  <p className="text-sm text-primary-500">Uploading...</p>
                 )}
                 {formData.resumeUrl && (
-                  <p className="text-sm text-green-500">
+                  <p className="text-sm text-success-500">
                     Resume uploaded successfully
                   </p>
                 )}
                 {errors.resume && (
-                  <p className="text-sm text-red-500">{errors.resume}</p>
+                  <p className="text-sm text-error-500">{errors.resume}</p>
                 )}
               </div>
             </div>
@@ -377,7 +382,7 @@ const SignUp = ({ onClose, onLoginClick }) => {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute top-8 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-8 right-3 text-text-muted hover:text-text-primary"
             >
               {showPassword ? (
                 <Eye className="h-5 w-5" />
@@ -402,7 +407,7 @@ const SignUp = ({ onClose, onLoginClick }) => {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute top-8 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-8 right-3 text-text-muted hover:text-text-primary"
             >
               {showPassword ? (
                 <Eye className="h-5 w-5" />
@@ -414,17 +419,16 @@ const SignUp = ({ onClose, onLoginClick }) => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
+            className="w-full bg-primary-600 text-surface py-2 px-4 rounded hover:bg-primary-700 transition-colors"
           >
             Sign Up
           </button>
 
-          {/* Social login section remains the same */}
-          <span className="block text-center text-sm text-gray-600">
+          <span className="block text-center text-sm text-text-secondary">
             Already have an account?{" "}
             <button
               type="button"
-              className="text-green-600 hover:text-green-700"
+              className="text-success-600 hover:text-success-700"
               onClick={onLoginClick}
             >
               Login
@@ -433,10 +437,10 @@ const SignUp = ({ onClose, onLoginClick }) => {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
+              <span className="px-2 bg-surface text-text-tertiary">
                 Or continue with
               </span>
             </div>
@@ -446,19 +450,21 @@ const SignUp = ({ onClose, onLoginClick }) => {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="flex items-center justify-center px-4 py-1.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors w-full"
+              className="flex items-center justify-center px-4 py-1.5 border border-border rounded-md bg-surface hover:bg-hover transition-colors w-full"
             >
               <GoogleIcon />
-              <span className="text-sm font-medium text-gray-700">Google</span>
+              <span className="text-sm font-medium text-text-primary">
+                Google
+              </span>
             </button>
 
             <button
               type="button"
               onClick={handleLinkedInLogin}
-              className="flex items-center justify-center px-4 py-1.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-center px-4 py-1.5 border border-border rounded-md bg-surface hover:bg-hover transition-colors"
             >
               <LinkedInIcon />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-text-primary">
                 LinkedIn
               </span>
             </button>
