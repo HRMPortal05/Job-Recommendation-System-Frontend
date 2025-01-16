@@ -4,7 +4,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import App from "./App.jsx";
 import { store } from "./app/Store.jsx";
-import LandingPage from "./components/LandingPage.jsx";
+import LandingPage from "./components/main/LandingPage.jsx";
 
 // const withSnackbar = (Component) => (
 //   <SnackbarProvider maxSnack={3}>
