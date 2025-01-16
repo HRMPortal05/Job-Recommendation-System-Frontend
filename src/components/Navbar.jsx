@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChevronDown,
   Sun,
@@ -163,7 +163,22 @@ const Navbar = () => {
     },
   ];
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMobileMenuOpen]);
+
   const openLogin = () => {
+    if (isMobileMenuOpen) {
+      setIsMobileMenuOpen(!isMobileMenuOpen);
+    }
     setIsLoginMenuOpen(!isLoginMenuOpen);
     setIsSignUpMenuOpen(false);
   };
@@ -257,7 +272,7 @@ const Navbar = () => {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="lg:hidden py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="lg:hidden py-4 border-t border-gray-200 dark:border-gray-700 max-h-screen overflow-y-auto">
               {navItems.map((item, index) => (
                 <div key={index} className="py-2">
                   <div className="px-4 py-2 font-medium text-gray-900 dark:text-white">
@@ -279,7 +294,10 @@ const Navbar = () => {
                   <Upload className="h-4 w-4" />
                   <span>Upload CV</span>
                 </button>
-                <button className="w-full flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-400 transition-colors py-2">
+                <button
+                  className="w-full flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-400 transition-colors py-2"
+                  onClick={() => openLogin()}
+                >
                   <LogIn className="h-4 w-4" />
                   <span>Login</span>
                 </button>

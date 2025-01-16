@@ -22,6 +22,7 @@ const SignUp = ({ onClose, onLoginClick }) => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   const validateField = (name, value) => {
     switch (name) {
@@ -108,19 +109,16 @@ const SignUp = ({ onClose, onLoginClick }) => {
     }
   };
 
-  const handleResumeUpload = async (e) => {
-    const file = e.target.files[0];
+  const handleFileUpload = async (file) => {
     if (file && file.type === "application/pdf") {
       setUploading(true);
       try {
-        // Create FormData for Cloudinary upload
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("upload_preset", "PDF_Resume"); // Replace with your Cloudinary upload preset
+        formData.append("upload_preset", "PDF_Resume");
 
-        // Upload to Cloudinary
         const response = await fetch(
-          "https://api.cloudinary.com/v1_1/duzoeq3dw/upload", // Replace with your Cloudinary cloud name
+          "https://api.cloudinary.com/v1_1/duzoeq3dw/upload",
           {
             method: "POST",
             body: formData,
@@ -128,17 +126,50 @@ const SignUp = ({ onClose, onLoginClick }) => {
         );
 
         const data = await response.json();
-        console.log(data);
         setFormData((prev) => ({
           ...prev,
           resumeUrl: data.secure_url,
         }));
       } catch (err) {
-        setError("Failed to upload resume. Please try again.");
+        setErrors((prev) => ({
+          ...prev,
+          resume: "Failed to upload resume. Please try again.",
+        }));
       }
       setUploading(false);
     } else {
-      setError("Please upload a PDF file.");
+      setErrors((prev) => ({
+        ...prev,
+        resume: "Please upload a PDF file.",
+      }));
+    }
+  };
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      await handleFileUpload(file);
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      await handleFileUpload(file);
     }
   };
 
@@ -282,9 +313,21 @@ const SignUp = ({ onClose, onLoginClick }) => {
             >
               Resume (PDF) *
             </label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+            <div
+              className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${
+                dragActive ? "border-blue-400 bg-blue-50" : "border-gray-300"
+              } border-dashed rounded-md relative`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
               <div className="space-y-1 text-center">
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                <Upload
+                  className={`mx-auto h-12 w-12 ${
+                    dragActive ? "text-blue-400" : "text-gray-400"
+                  }`}
+                />
                 <div className="flex text-sm text-gray-600">
                   <label
                     htmlFor="resume"
@@ -311,6 +354,9 @@ const SignUp = ({ onClose, onLoginClick }) => {
                   <p className="text-sm text-green-500">
                     Resume uploaded successfully
                   </p>
+                )}
+                {errors.resume && (
+                  <p className="text-sm text-red-500">{errors.resume}</p>
                 )}
               </div>
             </div>
