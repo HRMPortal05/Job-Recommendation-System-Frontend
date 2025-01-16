@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../theme/DarkMode";
 import SignUp from "./auth/SignUp";
-import Login from "./auth/login";
+import Login from "./auth/Login";
 
 const ThemeSwitcher = ({ currentTheme, onThemeChange }) => {
   const themes = [
