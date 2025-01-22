@@ -10,7 +10,7 @@ export default defineConfig({
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
       manifest: {
         name: "JOB_Recommendation_System",
-        short_name: "JOB_Portal",
+        short_name: "CareerVista",
         description: "It will recommend you the best job for you",
         theme_color: "#ffffff",
         icons: [
