@@ -8,41 +8,6 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
-      manifest: {
-        name: "JOB_Recommendation_System",
-        short_name: "CareerVista",
-        description: "It will recommend you the best job for you",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
-        display: "standalone",
-        start_url: "/",
-        icons: [
-          {
-            src: "/pwa-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any",
-          },
-          {
-            src: "/pwa-maskable-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "maskable",
-          },
-          {
-            src: "/pwa-maskable-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
     }),
   ],
   server: {
