@@ -13,6 +13,7 @@ export default defineConfig({
         short_name: "CareerVista",
         description: "It will recommend you the best job for you",
         theme_color: "#ffffff",
+        start_url: "/",
         icons: [
           {
             src: "/pwa-192x192.png",
