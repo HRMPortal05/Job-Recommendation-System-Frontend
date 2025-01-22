@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import App from "./App.jsx";
 import { store } from "./app/Store.jsx";
 import LandingPage from "./components/main/LandingPage.jsx";
+import JobList from "./components/jobs/JobList.jsx";
 
 // const withSnackbar = (Component) => (
 //   <SnackbarProvider maxSnack={3}>
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <LandingPage />,
+      },
+      {
+        path: "joblist",
+        element: <JobList />,
       },
     ],
   },

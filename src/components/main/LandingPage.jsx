@@ -11,8 +11,10 @@ import {
   Star,
 } from "lucide-react";
 import job_hunt from "../../images/job-hunt.svg";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [isVisible, setIsVisible] = useState(false);
@@ -69,11 +71,15 @@ const LandingPage = () => {
     },
   ];
 
+  const findJob = () => {
+    navigate("/joblist");
+  };
+
   return (
-    <div className="flex flex-col mt-5">
+    <div className="flex flex-col">
       {/* Hero Section */}
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center px-4 sm:px-8">
-        <div className="max-w-7xl w-full">
+        <div className="max-w-7xl w-full mt-10">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-16 items-center py-10 md:py-20">
             {/* Left Side */}
             <div
@@ -133,7 +139,10 @@ const LandingPage = () => {
                     />
                   </div>
                 </div>
-                <button className="w-full py-4 px-4 bg-primary-600 hover:bg-primary-700 dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-text-dark_primary rounded-lg text-lg font-medium transition-all duration-200">
+                <button
+                  onClick={() => findJob()}
+                  className="w-full py-4 px-4 bg-primary-600 hover:bg-primary-700 dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-text-dark_primary rounded-lg text-lg font-medium transition-all duration-200"
+                >
                   Find Jobs
                 </button>
               </div>

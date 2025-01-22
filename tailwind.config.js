@@ -80,9 +80,9 @@ export default {
           300: "#D1D5DB", // gray-300
           400: "#9CA3AF", // gray-400
           DEFAULT: "#FFFFFF", // white
-          dark: "#1f2937", // gray-900
+          dark: "#1E1E1E", // darker gray for dark mode
           overlay: "rgba(255, 255, 255, 0.95)", // white/95
-          dark_overlay: "rgba(17, 24, 39, 0.95)", // gray-900/95
+          dark_overlay: "rgba(30, 30, 30, 0.95)", // adjusted overlay for dark mode
         },
         border: {
           light: "#F3F4F6", // gray-100
@@ -111,8 +111,8 @@ export default {
         background: {
           light: "#FFFFFF", // white
           DEFAULT: "#F9FAFB", // gray-50
-          dark: "#111827", // gray-900
-          darker: "#030712", // gray-950
+          dark: "#121212", // slightly off-black for dark mode
+          darker: "#0D0D0D", // deeper black shade for better contrast
         },
       },
     },
