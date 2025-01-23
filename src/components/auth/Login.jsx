@@ -74,7 +74,22 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
     // Handle login logic here
   };
 
-  const handleGoogleLogin = () => console.log("Logging in with Google");
+  const handleGoogleLogin = () => {
+    const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+    console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+    console.log(import.meta.env.VITE_GOOGLE_REDIRECT_URI);
+
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
+      scope: "openid email profile",
+      access_type: "offline",
+    });
+
+    // Redirect to Google OAuth login page
+    window.location.href = `${googleAuthUrl}?${params.toString()}`;
+  };
   const handleLinkedInLogin = () => console.log("Logging in with LinkedIn");
 
   return (
