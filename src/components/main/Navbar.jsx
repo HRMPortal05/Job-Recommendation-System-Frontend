@@ -10,6 +10,7 @@ import {
   UserPlus,
   Upload,
   LogIn,
+  LogOut,
 } from "lucide-react";
 import { useTheme } from "../../theme/DarkMode";
 import SignUp from "../auth/SignUp";
@@ -176,6 +177,13 @@ const Navbar = () => {
     setIsLoginMenuOpen(false);
   };
 
+  const Logout = () => {
+    localStorage.setItem("token", token);
+
+    const decodedToken = jwtDecode(token);
+    console.log("Decoded Token:", decodedToken);
+  };
+
   return (
     <>
       <div>
@@ -283,13 +291,23 @@ const Navbar = () => {
                   <Upload className="h-4 w-4" />
                   <span>Upload CV</span>
                 </button>
-                <button
-                  onClick={() => openLogin()}
-                  className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Login</span>
-                </button>
+                {localStorage.getItem("token") ? (
+                  <button
+                    onClick={() => openLogin()}
+                    className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>Login</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => Logout()}
+                    className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                )}
                 <button className="w-full flex items-center justify-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors">
                   <UserPlus className="h-4 w-4" />
                   <span>Post Job</span>

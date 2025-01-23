@@ -8,14 +8,11 @@ const App = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log("Location search:", location.search);
     const searchParams = new URLSearchParams(location.search);
     const token = searchParams.get("token");
-    console.log("Token:", token);
 
     if (token) {
       localStorage.setItem("token", token);
-      console.log("Token stored in localStorage");
       navigate("/", { replace: true });
     }
   }, [location, navigate]);
