@@ -15,6 +15,7 @@ import {
 import { useTheme } from "../../theme/DarkMode";
 import SignUp from "../auth/SignUp";
 import Login from "../auth/Login";
+import { jwtDecode } from "jwt-decode";
 
 const ThemeSwitcher = ({ currentTheme, onThemeChange }) => {
   const themes = [
@@ -178,7 +179,7 @@ const Navbar = () => {
   };
 
   const Logout = () => {
-    localStorage.setItem("token", token);
+    const token = localStorage.getItem("token");
 
     const decodedToken = jwtDecode(token);
     console.log("Decoded Token:", decodedToken);
@@ -237,13 +238,23 @@ const Navbar = () => {
                 <Upload className="h-4 w-4" />
                 <span>Upload CV</span>
               </button>
-              <button
-                onClick={() => openLogin()}
-                className="hidden md:flex items-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors"
-              >
-                <LogIn className="h-4 w-4" />
-                <span>Login</span>
-              </button>
+              {localStorage.getItem("token") ? (
+                <button
+                  onClick={() => LogOut()}
+                  className="hidden md:flex items-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>LogOut</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => openLogin()}
+                  className="hidden md:flex items-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Login</span>
+                </button>
+              )}
               <button className="hidden md:flex items-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-all duration-200 hover:shadow-lg">
                 <UserPlus className="h-4 w-4" />
                 <span>Post Job</span>
@@ -293,19 +304,19 @@ const Navbar = () => {
                 </button>
                 {localStorage.getItem("token") ? (
                   <button
-                    onClick={() => openLogin()}
-                    className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    <span>Login</span>
-                  </button>
-                ) : (
-                  <button
                     onClick={() => Logout()}
                     className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Logout</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openLogin()}
+                    className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>Login</span>
                   </button>
                 )}
                 <button className="w-full flex items-center justify-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors">
