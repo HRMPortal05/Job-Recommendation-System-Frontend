@@ -77,34 +77,17 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
   const handleGoogleLogin = () => {
     const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 
-    try {
-      // Validate environment variables
-      if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        throw new Error("Google Client ID is not configured");
-      }
-      if (!import.meta.env.VITE_GOOGLE_REDIRECT_URI) {
-        throw new Error("Redirect URI is not configured");
-      }
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
+      scope: "openid email profile",
+      access_type: "offline",
+    });
 
-      const params = new URLSearchParams({
-        response_type: "code",
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
-        scope: "openid email profile",
-        access_type: "offline",
-        // Add state parameter for security
-        state: crypto.randomUUID(),
-        // Add prompt parameter to ensure user consent
-        prompt: "consent",
-      });
-
-      window.location.href = `${googleAuthUrl}?${params.toString()}`;
-    } catch (error) {
-      console.error("Google OAuth configuration error:", error);
-      // Handle error appropriately in your UI
-    }
+    // Redirect to Google OAuth login page
+    window.location.href = `${googleAuthUrl}?${params.toString()}`;
   };
-
   const handleLinkedInLogin = () => console.log("Logging in with LinkedIn");
 
   return (
