@@ -3,13 +3,13 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const UserAuthApi = createApi({
   reducerPath: "UserAuthApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL + "/api/user/",
+    baseUrl: import.meta.env.VITE_BACKEND_URL + "/userlogin/",
   }),
   endpoints: (builder) => ({
     registerUser: builder.mutation({
       query: (registerData) => {
         return {
-          url: "register/",
+          url: "register",
           method: "POST",
           body: registerData,
           headers: {
@@ -21,7 +21,7 @@ export const UserAuthApi = createApi({
     loginUser: builder.mutation({
       query: (loginData) => {
         return {
-          url: "login/",
+          url: "login",
           method: "POST",
           body: loginData,
           headers: {
@@ -33,7 +33,7 @@ export const UserAuthApi = createApi({
     forgotpassword: builder.mutation({
       query: (forgotPasswordData) => {
         return {
-          url: "send-reset-password-email/",
+          url: "send-reset-password-email",
           method: "POST",
           body: forgotPasswordData,
           headers: {
@@ -45,7 +45,7 @@ export const UserAuthApi = createApi({
     changepassword: builder.mutation({
       query: ({ data, access_token }) => {
         return {
-          url: "changepassword/",
+          url: "changepassword",
           method: "POST",
           body: data,
           headers: {
@@ -57,7 +57,7 @@ export const UserAuthApi = createApi({
     resetpassword: builder.mutation({
       query: ({ data, id, token }) => {
         return {
-          url: `/reset-password/${id}/${token}/`,
+          url: `/reset-password/${id}/${token}`,
           method: "POST",
           body: data,
           headers: {
@@ -66,20 +66,9 @@ export const UserAuthApi = createApi({
         };
       },
     }),
-    fetchprofile: builder.mutation({
-      query: (access_token) => {
-        return {
-          url: "profile/",
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        };
-      },
-    }),
     userLogout: builder.mutation({
       query: ({ refresh, access_token }) => ({
-        url: "logout/",
+        url: "logout",
         method: "POST",
         body: { refresh },
         headers: {
@@ -90,7 +79,7 @@ export const UserAuthApi = createApi({
     verifyEmail: builder.mutation({
       query: ({ uid, token }) => {
         return {
-          url: `verify-email/${uid}/${token}/`,
+          url: `verify-email/${uid}/${token}`,
           method: "GET",
           headers: {
             "Content-type": "application/json",
@@ -107,7 +96,6 @@ export const {
   useForgotpasswordMutation,
   useResetpasswordMutation,
   useChangepasswordMutation,
-  useFetchprofileMutation,
   useUserLogoutMutation,
   useVerifyEmailMutation,
 } = UserAuthApi;
