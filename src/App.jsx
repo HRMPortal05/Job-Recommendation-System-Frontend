@@ -7,15 +7,15 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const token = searchParams.get("token");
+  // useEffect(() => {
+  //   const searchParams = new URLSearchParams(location.search);
+  //   const token = searchParams.get("token");
 
-    if (token) {
-      localStorage.setItem("token", token);
-      // navigate("/", { replace: true });
-    }
-  }, [location, navigate]);
+  //   if (token) {
+  //     localStorage.setItem("token", token);
+  //     navigate("/", { replace: true });
+  //   }
+  // }, [location, navigate]);
 
   return (
     <div className="flex flex-col min-h-screen">
