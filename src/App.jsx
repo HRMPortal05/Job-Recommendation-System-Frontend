@@ -13,7 +13,7 @@ const App = () => {
 
     if (token) {
       localStorage.setItem("token", token);
-      navigate("/", { replace: true });
+      // navigate("/", { replace: true });
     }
   }, [location, navigate]);
 
