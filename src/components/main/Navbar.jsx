@@ -204,7 +204,7 @@ const Navbar = () => {
         }
       );
 
-      enqueueSnackbar("Logged out in successfully", {
+      enqueueSnackbar("Logged out successfully", {
         variant: "success",
         autoHideDuration: 3000,
       });
@@ -212,9 +212,6 @@ const Navbar = () => {
       // Clean up local storage
       localStorage.removeItem("token");
       localStorage.removeItem("userData");
-
-      // Redirect to login page
-      // navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
 
@@ -229,7 +226,6 @@ const Navbar = () => {
   };
 
   const toHome = () => {
-    console.log("hello");
     navigate("/");
   };
 

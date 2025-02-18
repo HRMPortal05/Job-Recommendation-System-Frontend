@@ -9,40 +9,105 @@ import {
   ExternalLink,
   X,
 } from "lucide-react";
+import axios from "axios";
+import { useSearchParams } from "react-router-dom";
+
+// const jobs = [
+//   {
+//     jobId: "1",
+//     title: "Data Analyst",
+//     company: "Norstella",
+//     location: "Remote",
+//     description:
+//       "Each organization (Citeline, Evaluate, MMIT, Panalgo, The Dedham Group) delivers must-have answers for critical strategic and commercial decision-making.",
+//     tasks: ["Evaluate – bring the right drugs to market."],
+//     category: "Full-time",
+//     benefits: [
+//       "Health insurance",
+//       "Life insurance",
+//       "Provident Fund",
+//       "Work from home",
+//     ],
+//     aboutCompany:
+//       "At Norstella, our mission is simple: to help our clients bring life-saving therapies to market quicker—and help patients in need.",
+//     tags: "Data Analysis, Healthcare, Remote",
+//   },
+//   {
+//     jobId: "2",
+//     title: "Business Analyst Track & Trace",
+//     company: "Sandoz",
+//     location: "India",
+//     description:
+//       "Keeps abreast with internal Technology systems and documentation requirements, standards (including quality management and IT security), regulatory environments / requirements (if applicable),...",
+//     category: "Full-time",
+//     salary: "Not disclosed",
+//     postedAt: "Posted recently",
+//     tags: "Business Analysis, Technology, Quality Management",
+//   },
+// ];
 
 const jobs = [
   {
-    jobId: "1",
-    title: "Data Analyst",
-    company: "Norstella",
-    location: "Remote",
+    userJobId: "8649cac8-cb46-405e-af58-d368b1ba0989",
+    title: "UI/UX Developer",
+    companyName: "TAN Corp",
     description:
-      "Each organization (Citeline, Evaluate, MMIT, Panalgo, The Dedham Group) delivers must-have answers for critical strategic and commercial decision-making.",
-    tasks: ["Evaluate – bring the right drugs to market."],
-    category: "Full-time",
-    benefits: [
-      "Health insurance",
-      "Life insurance",
-      "Provident Fund",
-      "Work from home",
-    ],
-    aboutCompany:
-      "At Norstella, our mission is simple: to help our clients bring life-saving therapies to market quicker—and help patients in need.",
-    tags: "Data Analysis, Healthcare, Remote",
-  },
-  {
-    jobId: "2",
-    title: "Business Analyst Track & Trace",
-    company: "Sandoz",
-    location: "India",
-    description:
-      "Keeps abreast with internal Technology systems and documentation requirements, standards (including quality management and IT security), regulatory environments / requirements (if applicable),...",
-    category: "Full-time",
-    salary: "Not disclosed",
-    postedAt: "Posted recently",
-    tags: "Business Analysis, Technology, Quality Management",
+      '\u003Cp\u003EWe are seeking an innovative \u003Cstrong\u003EUI/UX Designer\u003C/strong\u003E with a minimum of 3 years of experience and a portfolio demonstrating user-centric design expertise. This role offers the flexibility to work from anywhere while contributing to meaningful digital experiences in a collaborative environment.\u003C/p\u003E\u003Cp\u003E\u003Cstrong\u003EKey Responsibilities:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EDesign intuitive and visually appealing user interfaces for web and mobile applications.\u003C/li\u003E \u003Cli style=""\u003EConduct user research and create wireframes, prototypes, and mockups.\u003C/li\u003E \u003Cli style=""\u003ECollaborate with cross-functional teams to ensure seamless user experiences.\u003C/li\u003E \u003Cli style=""\u003EStay updated with UI/UX trends, tools, and best practices.\u003C/li\u003E \u003Cli style=""\u003EIterate designs based on user feedback and performance data.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003ERequirements\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EProficiency in design tools such as Figma, Adobe XD, or Sketch.\u003C/li\u003E \u003Cli style=""\u003EStrong understanding of user-centered design principles.\u003C/li\u003E \u003Cli style=""\u003EExperience creating responsive designs for various devices.\u003C/li\u003E \u003Cli style=""\u003EExcellent communication and collaboration skills.\u003C/li\u003E \u003Cli style=""\u003EA portfolio showcasing UI/UX design projects.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003EBenefits\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003E \u003Cstrong\u003EWork from Anywhere:\u003C/strong\u003E Design in your preferred workspace, wherever that may be.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003EProfessional Growth:\u003C/strong\u003E Opportunities to refine your skills and explore innovative design techniques.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003ECreative Collaboration:\u003C/strong\u003E Join a team that values your insights and fosters innovation.\u003C/li\u003E \u003C/ul\u003E\u003Cimg src="https://remotive.com/job/track/1961332/blank.gif?source=public_api" alt=""/\u003E',
+    contactEmail: "contact@tancorp.com",
+    tags: "Figma, Wordpress",
+    companyUrl: "https://www.tancorp.com",
+    updatedAt: "2025-02-18T00:15:43.737214",
+    city: "Ahmedabad",
+    state: "Gujarat",
   },
 ];
+
+const formatJobDescription = (description) => {
+  // Replace escaped HTML entities
+  let formattedDesc = description
+    .replace(/\\u003C/g, "<")
+    .replace(/\\u003E/g, ">")
+    .replace(/\\"/g, '"');
+
+  // First, handle section headers consistently - including those created with different methods
+  formattedDesc = formattedDesc
+    // Convert div with class h3 to headers
+    .replace(
+      /<div class="h3">([^<]+)<\/div>/g,
+      '<h3 class="text-white font-bold text-xl mt-8 mb-4">$1</h3>'
+    )
+    // Make standalone section titles bold (like "Key Responsibilities:")
+    .replace(
+      /<p>([A-Za-z\s]+:)<\/p>/g,
+      '<h3 class="text-white font-bold text-xl mt-8 mb-4">$1</h3>'
+    )
+    // Handle strong tags that are section headers
+    .replace(
+      /<p><strong>([A-Za-z\s]+:)<\/strong><\/p>/g,
+      '<h3 class=" font-bold mt-8 mb-4">$1</h3>'
+    );
+
+  // Handle sub-headers (bold text within paragraphs that isn't a main section)
+  // formattedDesc = formattedDesc.replace(
+  //   /<strong>([^:]+)<\/strong>/g,
+  //   '<span class="font-bold">$1</span>'
+  // );
+
+  // Ensure bullet points have dots and proper spacing
+  formattedDesc = formattedDesc
+    .replace(/<li style="">/g, '<li class="list-disc ml-5 mt-2 mb-2">')
+    .replace(/<li>/g, '<li class="list-disc ml-5 mt-2 mb-2">');
+
+  // Ensure proper list styling
+  formattedDesc = formattedDesc
+    .replace(/<ul style="">/g, '<ul class="my-4 space-y-2">')
+    .replace(/<ul>/g, '<ul class="my-4 space-y-2">');
+
+  // Add spacing between paragraphs
+  formattedDesc = formattedDesc.replace(/<p>/g, '<p class="my-3">');
+
+  return formattedDesc;
+};
 
 const JobDetailView = ({ job, isVisible, onClose }) => (
   <div
@@ -66,14 +131,14 @@ const JobDetailView = ({ job, isVisible, onClose }) => (
               </h1>
               <div className="flex items-center mt-2">
                 <span className="text-primary dark:text-primary-dark">
-                  {job.company}
+                  {job.companyName}
                 </span>
                 <span className="mx-2 text-text-tertiary dark:text-text-dark_tertiary">
                   •
                 </span>
                 <span className="flex items-center text-text-secondary dark:text-text-dark_secondary">
                   <MapPin className="w-4 h-4 mr-1" />
-                  {job.location}
+                  {`${job.city} ${job.state}`}
                 </span>
               </div>
             </div>
@@ -87,7 +152,10 @@ const JobDetailView = ({ job, isVisible, onClose }) => (
             </div>
           </div>
 
-          <button className="mt-6 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white px-6 py-3 rounded-lg">
+          <button
+            onClick={() => window.open(job.companyUrl, "_blank")}
+            className="mt-6 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white px-6 py-3 rounded-lg"
+          >
             Apply now
           </button>
 
@@ -100,9 +168,11 @@ const JobDetailView = ({ job, isVisible, onClose }) => (
                 <span className="text-text-tertiary dark:text-text-dark_tertiary">
                   Job type
                 </span>
-                <div className="font-medium mt-1 text-text-primary dark:text-text-dark_primary">
-                  {job.category}
-                </div>
+                {job.category && (
+                  <div className="font-medium mt-1 text-text-primary dark:text-text-dark_primary">
+                    {job.category}
+                  </div>
+                )}
               </div>
             </section>
 
@@ -142,7 +212,12 @@ const JobDetailView = ({ job, isVisible, onClose }) => (
                   </>
                 )}
                 <p className="text-text-tertiary dark:text-text-dark_tertiary">
-                  {job.description}
+                  <div
+                    className="prose max-w-none text-text-primary dark:text-text-dark_primary"
+                    dangerouslySetInnerHTML={{
+                      __html: formatJobDescription(job.description),
+                    }}
+                  />
                 </p>
               </div>
             </section>
@@ -173,14 +248,14 @@ const JobCard = ({ job, isSelected, onClick }) => (
               {job.title}
             </h3>
             <p className="text-text-secondary dark:text-text-dark_secondary flex items-center mt-1">
-              {job.company} <span className="mx-2">•</span>
-              <MapPin className="w-4 h-4 mr-1" /> {job.location}
+              {job.companyName} <span className="mx-2">•</span>
+              <MapPin className="w-4 h-4 mr-1" /> {`${job.city} , ${job.state}`}
             </p>
           </div>
         </div>
       </div>
       <p className="mt-4 text-text-tertiary dark:text-text-dark_tertiary line-clamp-2">
-        {job.description}
+        {/* <JobDescription description={job.description} /> */}
       </p>
       <div className="mt-4 flex gap-2 flex-wrap">
         {job.tags?.split(",").map((tag, index) => (
@@ -193,18 +268,42 @@ const JobCard = ({ job, isSelected, onClick }) => (
         ))}
       </div>
       <div className="mt-6 pt-4 border-t border-border-DEFAULT dark:border-border-dark flex justify-between items-center">
-        <span className="flex items-center text-text-tertiary dark:text-text-dark_tertiary">
-          <Briefcase className="w-4 h-4 mr-1" /> {job.category}
-        </span>
-        {job.salary && (
+        {job.category && (
           <span className="flex items-center text-text-tertiary dark:text-text-dark_tertiary">
-            <DollarSign className="w-4 h-4 mr-1" /> {job.salary}
+            <Briefcase className="w-4 h-4 mr-1" /> {job.category}
           </span>
         )}
-        {job.postedAt && (
+
+        <span className="flex items-center text-text-tertiary dark:text-text-dark_tertiary">
+          <DollarSign className="w-4 h-4 mr-1" />{" "}
+          {job.salary || "Not disclosed"}
+        </span>
+        {job.updatedAt ? (
           <span className="text-text-tertiary dark:text-text-dark_tertiary">
-            {job.postedAt}
+            {(() => {
+              const now = new Date();
+              const updatedDate = new Date(job.updatedAt);
+              const diffTime = Math.abs(now - updatedDate);
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+              const diffMonths = Math.floor(diffDays / 30);
+              const diffYears = Math.floor(diffDays / 365);
+
+              // Show relative time based on elapsed time
+              if (diffDays < 2) {
+                return "recently posted";
+              } else if (diffDays < 30) {
+                return `${diffDays} days ago`;
+              } else if (diffMonths < 12) {
+                return `${diffMonths} ${
+                  diffMonths === 1 ? "month" : "months"
+                } ago`;
+              } else {
+                return `${diffYears} ${diffYears === 1 ? "year" : "years"} ago`;
+              }
+            })()}
           </span>
+        ) : (
+          ""
         )}
       </div>
     </div>
@@ -212,8 +311,33 @@ const JobCard = ({ job, isSelected, onClick }) => (
 );
 
 const JobList = () => {
+  const [searchParams] = useSearchParams();
+  const job = searchParams.get("job");
+  const location = searchParams.get("location");
+
   const [selectedJob, setSelectedJob] = useState(jobs[0]);
   const [showDetail, setShowDetail] = useState(false);
+  const token = localStorage.getItem("token");
+
+  const fetchJobs = async () => {
+    const response = await axios.get(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/userjobssearch-jobs?value1=${job}&value2=${location}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log(response);
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
 
   const handleJobSelect = (job) => {
     setSelectedJob(job);
@@ -285,9 +409,9 @@ const JobList = () => {
             <div className="space-y-4">
               {jobs.map((job) => (
                 <JobCard
-                  key={job.jobId}
+                  key={job.userJobId}
                   job={job}
-                  isSelected={selectedJob.jobId === job.jobId}
+                  isSelected={selectedJob.userJobId === job.userJobId}
                   onClick={() => handleJobSelect(job)}
                 />
               ))}

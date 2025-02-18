@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.text-xg {
+    font-size: 1.2rem !important; /* Or whatever size you need */
+  }
+  

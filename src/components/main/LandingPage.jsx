@@ -72,7 +72,7 @@ const LandingPage = () => {
   ];
 
   const findJob = () => {
-    navigate("/joblist");
+    navigate(`/joblist?job=${searchQuery}&location=${location}`);
   };
 
   return (
