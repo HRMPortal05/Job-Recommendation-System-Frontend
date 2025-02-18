@@ -15,7 +15,10 @@ import {
 import { useTheme } from "../../theme/DarkMode";
 import SignUp from "../auth/SignUp";
 import Login from "../auth/Login";
-import { jwtDecode } from "jwt-decode";
+// import { jwtDecode } from "jwt-decode";
+import axios from "axios";
+import { enqueueSnackbar } from "notistack";
+import { useNavigate } from "react-router-dom";
 
 const ThemeSwitcher = ({ currentTheme, onThemeChange }) => {
   const themes = [
@@ -98,10 +101,12 @@ const NavDropdown = ({ title, items = [] }) => {
 };
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [theme, setTheme] = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginMenuOpen, setIsLoginMenuOpen] = useState(false);
   const [isSignUpMenuOpen, setIsSignUpMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navItems = [
     {
@@ -178,11 +183,54 @@ const Navbar = () => {
     setIsLoginMenuOpen(false);
   };
 
-  const Logout = () => {
-    const token = localStorage.getItem("token");
+  const Logout = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
 
-    const decodedToken = jwtDecode(token);
-    console.log("Decoded Token:", decodedToken);
+      // Call logout API using Axios
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/userlogin/logout`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      enqueueSnackbar("Logged out in successfully", {
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+
+      // Clean up local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("userData");
+
+      // Redirect to login page
+      // navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+
+      // Handle error appropriately
+      if (error.response && error.response.status === 401) {
+        console.error("Unauthorized. Clearing token.");
+        localStorage.removeItem("token");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toHome = () => {
+    console.log("hello");
+    navigate("/");
   };
 
   return (
@@ -212,7 +260,10 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center space-x-2">
+            <div
+              className="flex items-center space-x-2 cursor-pointer"
+              onClick={() => toHome()}
+            >
               <div className="bg-primary p-2 rounded-lg transform transition-transform hover:scale-110">
                 <BriefcaseBusiness className="h-6 w-6 text-white" />
               </div>
@@ -240,11 +291,11 @@ const Navbar = () => {
               </button>
               {localStorage.getItem("token") ? (
                 <button
-                  onClick={() => LogOut()}
+                  onClick={() => Logout()}
                   className="hidden md:flex items-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>LogOut</span>
+                  <span>{isLoading ? "Logging out..." : "LogOut"}</span>
                 </button>
               ) : (
                 <button

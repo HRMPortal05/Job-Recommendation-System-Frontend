@@ -4,6 +4,7 @@ import GoogleIcon from "../../images/GoogleIcon";
 import LinkedInIcon from "../../images/LinkedInIcon";
 import InputField from "../fields_hooks/InputField";
 import useScrollLock from "../fields_hooks/useScrollLock";
+import axios from "axios";
 
 const SignUp = ({ onClose, onLoginClick }) => {
   const [formData, setFormData] = useState({
@@ -17,15 +18,16 @@ const SignUp = ({ onClose, onLoginClick }) => {
     resumeUrl: "",
     password: "",
     confirmPassword: "",
-    role: "EMPLOYEE",
+    role: "COMPANY",
   });
-
-  useScrollLock(true);
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useScrollLock(true);
 
   const validateField = (name, value) => {
     switch (name) {
@@ -75,26 +77,6 @@ const SignUp = ({ onClose, onLoginClick }) => {
       [name]: error,
     }));
   };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validate all fields
-    const newErrors = {};
-    Object.keys(formData).forEach((key) => {
-      if (key !== "address" && key !== "role") {
-        const error = validateField(key, formData[key]);
-        if (error) newErrors[key] = error;
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    console.log("Signing up with", formData);
-    // Handle signup logic here
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -112,39 +94,130 @@ const SignUp = ({ onClose, onLoginClick }) => {
     }
   };
 
-  const handleFileUpload = async (file) => {
-    if (file && file.type === "application/pdf") {
-      setUploading(true);
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", "PDF_Resume");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-        const response = await fetch(
-          "https://api.cloudinary.com/v1_1/duzoeq3dw/upload",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        const data = await response.json();
-        setFormData((prev) => ({
-          ...prev,
-          resumeUrl: data.secure_url,
-        }));
-      } catch (err) {
-        setErrors((prev) => ({
-          ...prev,
-          resume: "Failed to upload resume. Please try again.",
-        }));
+    // Validate all fields
+    const newErrors = {};
+    Object.keys(formData).forEach((key) => {
+      if (key !== "address" && key !== "role" && key !== "confirmPassword") {
+        const error = validateField(key, formData[key]);
+        if (error) newErrors[key] = error;
       }
-      setUploading(false);
-    } else {
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const registerData = {
+      username: formData.username,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phoneNumber,
+      address: formData.address,
+      gender:
+        formData.gender.charAt(0).toUpperCase() + formData.gender.slice(1),
+      resumeUrl: formData.resumeUrl,
+      role: formData.role,
+    };
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/userlogin/register`,
+        registerData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Registration response:", response);
+      onClose();
+      onLoginClick();
+    } catch (error) {
+      console.log("Registration error:", error);
+      if (error.response && error.response.status === 409) {
+        const errorData = error.response.data;
+        setErrors({
+          username: errorData.includes("Username")
+            ? "Username already exists"
+            : "",
+          email: errorData.includes("Email") ? "Email already registered" : "",
+        });
+      } else {
+        setErrors({
+          submit: "Registration failed. Please try again later.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // File handling functions with error handling
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
       setErrors((prev) => ({
         ...prev,
         resume: "Please upload a PDF file.",
       }));
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB limit
+      setErrors((prev) => ({
+        ...prev,
+        resume: "File size must be less than 10MB.",
+      }));
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "PDF_Resume");
+
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/duzoeq3dw/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      setFormData((prev) => ({
+        ...prev,
+        resumeUrl: data.secure_url,
+      }));
+
+      // Clear any existing resume errors
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.resume;
+        return newErrors;
+      });
+    } catch (err) {
+      setErrors((prev) => ({
+        ...prev,
+        resume: "Failed to upload resume. Please try again.",
+      }));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -419,9 +492,10 @@ const SignUp = ({ onClose, onLoginClick }) => {
 
           <button
             type="submit"
-            className="w-full bg-primary-600 text-surface py-2 px-4 rounded hover:bg-primary-700 transition-colors"
+            className="w-full bg-primary-600 text-surface py-2 px-4 rounded hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading || uploading}
           >
-            Sign Up
+            {isLoading ? "Creating Account..." : "Sign Up"}
           </button>
 
           <span className="block text-center text-sm text-text-secondary">

@@ -1,30 +1,29 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { Provider } from "react-redux";
 import App from "./App.jsx";
-import { store } from "./app/Store.jsx";
 import LandingPage from "./components/main/LandingPage.jsx";
 import JobList from "./components/jobs/JobList.jsx";
+import { SnackbarProvider } from "notistack";
 
-// const withSnackbar = (Component) => (
-//   <SnackbarProvider maxSnack={3}>
-//   <Component />
-//   </SnackbarProvider>
-// );
+const withSnackbar = (Component) => (
+  <SnackbarProvider maxSnack={3}>
+    <Component />
+  </SnackbarProvider>
+);
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: withSnackbar(App),
     children: [
       {
         index: true,
-        element: <LandingPage />,
+        element: withSnackbar(LandingPage),
       },
       {
         path: "joblist",
-        element: <JobList />,
+        element: withSnackbar(JobList),
       },
     ],
   },
@@ -36,8 +35,6 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <RouterProvider router={router} />
-    </Provider>
+    <RouterProvider router={router} />
   </React.StrictMode>
 );

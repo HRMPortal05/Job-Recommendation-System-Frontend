@@ -4,25 +4,24 @@ import GoogleIcon from "../../images/GoogleIcon";
 import LinkedInIcon from "../../images/LinkedInIcon";
 import InputField from "../fields_hooks/InputField";
 import useScrollLock from "../fields_hooks/useScrollLock";
+import axios from "axios";
+import { enqueueSnackbar } from "notistack";
 
 const Login = ({ onLoginClose, onSignUpClick }) => {
   const [formData, setFormData] = useState({
-    email: "",
+    usernameOrEmail: "",
     password: "",
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useScrollLock(true);
 
   const validateField = (name, value) => {
     switch (name) {
-      case "email":
-        if (!value) return "Email or username is required";
-        if (value.includes("@") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          return "Please enter a valid email address";
-        }
-        return "";
+      case "usernameOrEmail":
+        return !value ? "Email or username is required" : "";
       case "password":
         return !value ? "Password is required" : "";
       default:
@@ -46,7 +45,6 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
       [name]: value,
     }));
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -55,8 +53,12 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
     }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    // Clear any previous errors
+    setErrors({});
 
     // Validate all fields
     const newErrors = {};
@@ -70,8 +72,46 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
       return;
     }
 
-    console.log("Logging in with", formData);
-    // Handle login logic here
+    // Create the login data object in the expected format
+    const loginData = {
+      usernameOrEmail: formData.usernameOrEmail,
+      password: formData.password,
+    };
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/userlogin/login`,
+        loginData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data?.token) {
+        enqueueSnackbar("Logged in successfully", {
+          variant: "success",
+          autoHideDuration: 3000,
+        });
+        localStorage.setItem("token", response.data.token);
+        onLoginClose();
+      }
+    } catch (error) {
+      console.error("Login error:", error.response.data.error);
+
+      if (error.response) {
+        setErrors({
+          submit: error.response.data.error,
+        });
+      } else {
+        setErrors({
+          submit: "An error occurred. Please try again later.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -82,7 +122,7 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
       scope: "openid email profile",
-      access_type: "offline",
+      access_type: "online",
     });
 
     // Redirect to Google OAuth login page
@@ -112,16 +152,23 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          {errors.submit && (
+            <div className="p-3 mb-4 text-sm text-red-500 bg-red-100 rounded">
+              {errors.submit}
+            </div>
+          )}
+
           <InputField
             label="Email or Username"
             type="text"
-            name="email"
-            value={formData.email}
+            name="usernameOrEmail"
+            value={formData.usernameOrEmail}
             onChange={handleInputChange}
             onBlur={handleBlur}
             placeholder="Enter your email or username"
             required
-            error={errors.email}
+            error={errors.usernameOrEmail}
+            disabled={isLoading}
           />
 
           <InputField
@@ -134,11 +181,13 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
             placeholder="Enter your password"
             required
             error={errors.password}
+            disabled={isLoading}
             icon={
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="text-text-muted hover:text-text-primary focus:outline-none"
+                disabled={isLoading}
               >
                 {showPassword ? (
                   <Eye className="h-5 w-5" />
@@ -151,9 +200,10 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
 
           <button
             type="submit"
-            className="w-full bg-primary-600 text-surface py-2 px-4 rounded hover:bg-primary-700 transition-colors"
+            className="w-full bg-primary-600 text-surface py-2 px-4 rounded hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </button>
 
           <span className="block text-center text-sm text-text-secondary">
