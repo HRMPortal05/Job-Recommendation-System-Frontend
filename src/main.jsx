@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import LandingPage from "./components/main/LandingPage.jsx";
 import JobList from "./components/jobs/JobList.jsx";
 import { SnackbarProvider } from "notistack";
+import ChangePassword from "./components/auth/ChangePassword.jsx";
 
 const withSnackbar = (Component) => (
   <SnackbarProvider maxSnack={3}>
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: "joblist",
         element: withSnackbar(JobList),
+      },
+      {
+        path: "change-password",
+        element: withSnackbar(ChangePassword),
       },
     ],
   },

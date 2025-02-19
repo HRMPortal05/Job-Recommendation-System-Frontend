@@ -11,6 +11,8 @@ import {
   Upload,
   LogIn,
   LogOut,
+  User,
+  KeyRound,
 } from "lucide-react";
 import { useTheme } from "../../theme/DarkMode";
 import SignUp from "../auth/SignUp";
@@ -95,6 +97,83 @@ const NavDropdown = ({ title, items = [] }) => {
             {item.label}
           </a>
         ))}
+      </div>
+    </div>
+  );
+};
+
+const UserDropdown = ({ onLogout, onLogin }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const userImage = localStorage.getItem("userImage") || "/default-avatar.png";
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <div className="flex items-center space-x-2 cursor-pointer">
+        {/* <div className="h-10 w-10 rounded-full overflow-hidden border border-border dark:border-border-dark">
+          <img
+            src={userImage}
+            alt="User profile"
+            className="h-full w-full object-cover"
+          />
+        </div> */}
+        <div className="flex items-center justify-center h-10 w-10 overflow-hidden border rounded-full border-text-secondary dark:border-text-dark_secondary">
+          <User className="text-text-secondary dark:text-text-dark_secondary" />
+        </div>
+        <ChevronDown
+          className={`h-4 w-4 text-text-muted transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </div>
+
+      <div
+        className={`absolute mt-2 right-0 w-48 bg-surface dark:bg-surface-dark rounded-lg shadow-lg py-2 border border-border dark:border-border-dark z-50 transition-all duration-200 ease-in-out ${
+          isOpen
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-2 pointer-events-none"
+        }`}
+      >
+        <div className="absolute h-2 w-full -top-2 bg-transparent" />
+
+        <a
+          href="/profile"
+          className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+        >
+          <User className="h-4 w-4" />
+          <span>Profile</span>
+        </a>
+
+        <a
+          href="/change-password"
+          className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+        >
+          <KeyRound className="h-4 w-4" />
+          <span>Change Password</span>
+        </a>
+
+        <div className="border-t border-border dark:border-border-dark my-1" />
+
+        {localStorage.getItem("token") ? (
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </button>
+        ) : (
+          <button
+            onClick={onLogin}
+            className="w-full flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+          >
+            <LogIn className="h-4 w-4" />
+            <span>Login</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -285,15 +364,7 @@ const Navbar = () => {
                 <Upload className="h-4 w-4" />
                 <span>Upload CV</span>
               </button>
-              {localStorage.getItem("token") ? (
-                <button
-                  onClick={() => Logout()}
-                  className="hidden md:flex items-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>{isLoading ? "Logging out..." : "LogOut"}</span>
-                </button>
-              ) : (
+              {!localStorage.getItem("token") && (
                 <button
                   onClick={() => openLogin()}
                   className="hidden md:flex items-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors"
@@ -320,6 +391,12 @@ const Navbar = () => {
                 )}
               </button>
             </div>
+
+            {localStorage.getItem("token") && (
+              <div>
+                <UserDropdown onLogout={Logout} onLogin={openLogin} />
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu */}
@@ -349,15 +426,7 @@ const Navbar = () => {
                   <Upload className="h-4 w-4" />
                   <span>Upload CV</span>
                 </button>
-                {localStorage.getItem("token") ? (
-                  <button
-                    onClick={() => Logout()}
-                    className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </button>
-                ) : (
+                {!localStorage.getItem("token") && (
                   <button
                     onClick={() => openLogin()}
                     className="w-full flex items-center justify-center space-x-2 text-text-secondary dark:text-text-dark_secondary hover:text-text-primary dark:hover:text-text-dark_primary transition-colors py-2"
