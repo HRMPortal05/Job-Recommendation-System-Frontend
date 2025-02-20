@@ -8,6 +8,7 @@ import {
   Bookmark,
   ExternalLink,
   X,
+  Loader,
 } from "lucide-react";
 import axios from "axios";
 import { useSearchParams } from "react-router-dom";
@@ -46,21 +47,21 @@ import { useSearchParams } from "react-router-dom";
 //   },
 // ];
 
-const jobs = [
-  {
-    userJobId: "8649cac8-cb46-405e-af58-d368b1ba0989",
-    title: "UI/UX Developer",
-    companyName: "TAN Corp",
-    description:
-      '\u003Cp\u003EWe are seeking an innovative \u003Cstrong\u003EUI/UX Designer\u003C/strong\u003E with a minimum of 3 years of experience and a portfolio demonstrating user-centric design expertise. This role offers the flexibility to work from anywhere while contributing to meaningful digital experiences in a collaborative environment.\u003C/p\u003E\u003Cp\u003E\u003Cstrong\u003EKey Responsibilities:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EDesign intuitive and visually appealing user interfaces for web and mobile applications.\u003C/li\u003E \u003Cli style=""\u003EConduct user research and create wireframes, prototypes, and mockups.\u003C/li\u003E \u003Cli style=""\u003ECollaborate with cross-functional teams to ensure seamless user experiences.\u003C/li\u003E \u003Cli style=""\u003EStay updated with UI/UX trends, tools, and best practices.\u003C/li\u003E \u003Cli style=""\u003EIterate designs based on user feedback and performance data.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003ERequirements:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EProficiency in design tools such as Figma, Adobe XD, or Sketch.\u003C/li\u003E \u003Cli style=""\u003EStrong understanding of user-centered design principles.\u003C/li\u003E \u003Cli style=""\u003EExperience creating responsive designs for various devices.\u003C/li\u003E \u003Cli style=""\u003EExcellent communication and collaboration skills.\u003C/li\u003E \u003Cli style=""\u003EA portfolio showcasing UI/UX design projects.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003EBenefits:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003E \u003Cstrong\u003EWork from Anywhere:\u003C/strong\u003E Design in your preferred workspace, wherever that may be.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003EProfessional Growth:\u003C/strong\u003E Opportunities to refine your skills and explore innovative design techniques.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003ECreative Collaboration:\u003C/strong\u003E Join a team that values your insights and fosters innovation.\u003C/li\u003E \u003C/ul\u003E\u003Cimg src="https://remotive.com/job/track/1961332/blank.gif?source=public_api" alt=""/\u003E',
-    contactEmail: "contact@tancorp.com",
-    tags: "Figma, Wordpress",
-    companyUrl: "https://www.tancorp.com",
-    updatedAt: "2025-02-18T00:15:43.737214",
-    city: "Ahmedabad",
-    state: "Gujarat",
-  },
-];
+// const jobs = [
+//   {
+//     userJobId: "8649cac8-cb46-405e-af58-d368b1ba0989",
+//     title: "UI/UX Developer",
+//     companyName: "TAN Corp",
+//     description:
+//       '\u003Cp\u003EWe are seeking an innovative \u003Cstrong\u003EUI/UX Designer\u003C/strong\u003E with a minimum of 3 years of experience and a portfolio demonstrating user-centric design expertise. This role offers the flexibility to work from anywhere while contributing to meaningful digital experiences in a collaborative environment.\u003C/p\u003E\u003Cp\u003E\u003Cstrong\u003EKey Responsibilities:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EDesign intuitive and visually appealing user interfaces for web and mobile applications.\u003C/li\u003E \u003Cli style=""\u003EConduct user research and create wireframes, prototypes, and mockups.\u003C/li\u003E \u003Cli style=""\u003ECollaborate with cross-functional teams to ensure seamless user experiences.\u003C/li\u003E \u003Cli style=""\u003EStay updated with UI/UX trends, tools, and best practices.\u003C/li\u003E \u003Cli style=""\u003EIterate designs based on user feedback and performance data.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003ERequirements:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EProficiency in design tools such as Figma, Adobe XD, or Sketch.\u003C/li\u003E \u003Cli style=""\u003EStrong understanding of user-centered design principles.\u003C/li\u003E \u003Cli style=""\u003EExperience creating responsive designs for various devices.\u003C/li\u003E \u003Cli style=""\u003EExcellent communication and collaboration skills.\u003C/li\u003E \u003Cli style=""\u003EA portfolio showcasing UI/UX design projects.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003EBenefits:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003E \u003Cstrong\u003EWork from Anywhere:\u003C/strong\u003E Design in your preferred workspace, wherever that may be.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003EProfessional Growth:\u003C/strong\u003E Opportunities to refine your skills and explore innovative design techniques.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003ECreative Collaboration:\u003C/strong\u003E Join a team that values your insights and fosters innovation.\u003C/li\u003E \u003C/ul\u003E\u003Cimg src="https://remotive.com/job/track/1961332/blank.gif?source=public_api" alt=""/\u003E',
+//     contactEmail: "contact@tancorp.com",
+//     tags: "Figma, Wordpress",
+//     companyUrl: "https://www.tancorp.com",
+//     updatedAt: "2025-02-18T00:15:43.737214",
+//     city: "Ahmedabad",
+//     state: "Gujarat",
+//   },
+// ];
 
 const formatJobDescription = (description) => {
   // Replace escaped HTML entities
@@ -308,35 +309,86 @@ const JobList = () => {
   const [searchParams] = useSearchParams();
   const job = searchParams.get("job");
   const location = searchParams.get("location");
-
-  const [selectedJob, setSelectedJob] = useState(jobs[0]);
+  const [jobs, setJobs] = useState([]);
+  const [selectedJob, setSelectedJob] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
 
   const fetchJobs = async () => {
-    const response = await axios.get(
-      `${
-        import.meta.env.VITE_BACKEND_URL
-      }/userjobssearch-jobs?value1=${job}&value2=${location}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/userjobs/search-jobs?value1=${job}&value2=${location}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    console.log(response);
+      const fetchedJobs = response.data;
+      setJobs(fetchedJobs);
+
+      // Set the first job as selected if jobs exist
+      if (fetchedJobs.length > 0) {
+        setSelectedJob(fetchedJobs[0]);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to fetch jobs");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [job, location]);
 
   const handleJobSelect = (job) => {
     setSelectedJob(job);
     setShowDetail(true);
   };
+
+  const LoadingSpinner = () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center gap-2">
+        <Loader className="w-8 h-8 animate-spin text-primary dark:text-primary-dark" />
+        <p className="text-text-secondary dark:text-text-dark_secondary">
+          Loading jobs...
+        </p>
+      </div>
+    </div>
+  );
+
+  const ErrorMessage = () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <p className="text-red-500 dark:text-red-400 mb-2">
+          {error || "Something went wrong"}
+        </p>
+        <button
+          onClick={fetchJobs}
+          className="text-primary dark:text-primary-dark hover:underline"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+
+  const NoJobsFound = () => (
+    <div className="flex items-center justify-center h-64">
+      <p className="text-text-secondary dark:text-text-dark_secondary">
+        No jobs found matching your criteria
+      </p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background-DEFAULT dark:bg-background-darker">
@@ -400,22 +452,32 @@ const JobList = () => {
 
         <div className="flex flex-col md:flex-row gap-8">
           <div className="w-full md:w-1/2">
-            <div className="space-y-4">
-              {jobs.map((job) => (
-                <JobCard
-                  key={job.userJobId}
-                  job={job}
-                  isSelected={selectedJob.userJobId === job.userJobId}
-                  onClick={() => handleJobSelect(job)}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : error ? (
+              <ErrorMessage />
+            ) : jobs.length === 0 ? (
+              <NoJobsFound />
+            ) : (
+              <div className="space-y-4">
+                {jobs.map((job) => (
+                  <JobCard
+                    key={job.userJobId}
+                    job={job}
+                    isSelected={selectedJob?.userJobId === job.userJobId}
+                    onClick={() => handleJobSelect(job)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          <JobDetailView
-            job={selectedJob}
-            isVisible={showDetail}
-            onClose={() => setShowDetail(false)}
-          />
+          {selectedJob && (
+            <JobDetailView
+              job={selectedJob}
+              isVisible={showDetail}
+              onClose={() => setShowDetail(false)}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -289,8 +289,9 @@ const Navbar = () => {
       });
 
       // Clean up local storage
-      localStorage.removeItem("token");
-      localStorage.removeItem("userData");
+      const thm = localStorage.getItem("theme");
+      localStorage.clear();
+      localStorage.setItem("theme", thm);
     } catch (error) {
       console.error("Logout failed:", error);
 
