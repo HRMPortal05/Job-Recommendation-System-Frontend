@@ -8,6 +8,7 @@ import { SnackbarProvider } from "notistack";
 import ChangePassword from "./components/auth/ChangePassword.jsx";
 import ForgotPasswordEmail from "./components/auth/ForgotPasswordEmail.jsx";
 import ResetPassword from "./components/auth/ResetPassword.jsx";
+import UserProfile from "./components/userprofile/UserProfile.jsx";
 
 const withSnackbar = (Component) => (
   <SnackbarProvider maxSnack={3}>
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
       {
         path: "reset-password",
         element: withSnackbar(ResetPassword),
+      },
+      {
+        path: "user-profile",
+        element: withSnackbar(UserProfile),
       },
     ],
   },
