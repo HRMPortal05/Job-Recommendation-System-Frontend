@@ -20,7 +20,7 @@ import Login from "../auth/Login";
 // import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ThemeSwitcher = ({ currentTheme, onThemeChange }) => {
   const themes = [
@@ -102,9 +102,10 @@ const NavDropdown = ({ title, items = [] }) => {
   );
 };
 
+// import { User, ChevronDown, KeyRound, LogOut, LogIn } from "lucide-react";
+
 const UserDropdown = ({ onLogout, onLogin }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const userImage = localStorage.getItem("userImage") || "/default-avatar.png";
 
   return (
     <div
@@ -113,13 +114,6 @@ const UserDropdown = ({ onLogout, onLogin }) => {
       onMouseLeave={() => setIsOpen(false)}
     >
       <div className="flex items-center space-x-2 cursor-pointer">
-        {/* <div className="h-10 w-10 rounded-full overflow-hidden border border-border dark:border-border-dark">
-          <img
-            src={userImage}
-            alt="User profile"
-            className="h-full w-full object-cover"
-          />
-        </div> */}
         <div className="flex items-center justify-center h-10 w-10 overflow-hidden border rounded-full border-text-secondary dark:border-text-dark_secondary">
           <User className="text-text-secondary dark:text-text-dark_secondary" />
         </div>
@@ -139,40 +133,52 @@ const UserDropdown = ({ onLogout, onLogin }) => {
       >
         <div className="absolute h-2 w-full -top-2 bg-transparent" />
 
-        <a
-          href="/profile"
-          className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
-        >
-          <User className="h-4 w-4" />
-          <span>Profile</span>
-        </a>
-
-        <a
-          href="/change-password"
-          className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
-        >
-          <KeyRound className="h-4 w-4" />
-          <span>Change Password</span>
-        </a>
-
-        <div className="border-t border-border dark:border-border-dark my-1" />
-
         {localStorage.getItem("token") ? (
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </button>
+          <>
+            <Link
+              to="/profile"
+              className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+            >
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </Link>
+
+            <Link
+              to="/change-password"
+              className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+            >
+              <KeyRound className="h-4 w-4" />
+              <span>Change Password</span>
+            </Link>
+
+            <div className="border-t border-border dark:border-border-dark my-1" />
+
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </button>
+          </>
         ) : (
-          <button
-            onClick={onLogin}
-            className="w-full flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
-          >
-            <LogIn className="h-4 w-4" />
-            <span>Login</span>
-          </button>
+          <>
+            <Link
+              to="/forgot-password"
+              className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+            >
+              <KeyRound className="h-4 w-4" />
+              <span>Forgot Password</span>
+            </Link>
+
+            <button
+              onClick={onLogin}
+              className="w-full flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Login</span>
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -188,14 +194,14 @@ const Navbar = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navItems = [
-    {
-      title: "Home",
-      items: [
-        { label: "Homepage 1", href: "#" },
-        { label: "Homepage 2", href: "#" },
-        { label: "Homepage 3", href: "#" },
-      ],
-    },
+    // {
+    //   title: "Home",
+    //   items: [
+    //     { label: "Homepage 1", href: "#" },
+    //     { label: "Homepage 2", href: "#" },
+    //     { label: "Homepage 3", href: "#" },
+    //   ],
+    // },
     {
       title: "Find Jobs",
       items: [
@@ -204,14 +210,14 @@ const Navbar = () => {
         { label: "Apply Now", href: "#" },
       ],
     },
-    {
-      title: "Employers",
-      items: [
-        { label: "All Employers", href: "#" },
-        { label: "Employer Details", href: "#" },
-        { label: "Post a Job", href: "#" },
-      ],
-    },
+    // {
+    //   title: "Employers",
+    //   items: [
+    //     { label: "All Employers", href: "#" },
+    //     { label: "Employer Details", href: "#" },
+    //     { label: "Post a Job", href: "#" },
+    //   ],
+    // },
     {
       title: "Candidates",
       items: [
@@ -292,6 +298,8 @@ const Navbar = () => {
       const thm = localStorage.getItem("theme");
       localStorage.clear();
       localStorage.setItem("theme", thm);
+
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
 
@@ -360,7 +368,7 @@ const Navbar = () => {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 md:space-x-6 lg:space-x-6">
               <button className="hidden md:flex items-center space-x-2 text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
                 <Upload className="h-4 w-4" />
                 <span>Upload CV</span>
@@ -381,6 +389,10 @@ const Navbar = () => {
 
               <ThemeSwitcher currentTheme={theme} onThemeChange={setTheme} />
 
+              <div>
+                <UserDropdown onLogout={Logout} onLogin={openLogin} />
+              </div>
+
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="lg:hidden p-2 rounded-lg hover:bg-hover dark:hover:bg-hover-dark transition-colors"
@@ -392,12 +404,6 @@ const Navbar = () => {
                 )}
               </button>
             </div>
-
-            {localStorage.getItem("token") && (
-              <div>
-                <UserDropdown onLogout={Logout} onLogin={openLogin} />
-              </div>
-            )}
           </div>
 
           {/* Mobile Menu */}

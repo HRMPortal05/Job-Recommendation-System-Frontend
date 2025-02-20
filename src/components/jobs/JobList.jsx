@@ -11,7 +11,7 @@ import {
   Loader,
 } from "lucide-react";
 import axios from "axios";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // const jobs = [
 //   {
@@ -106,7 +106,7 @@ const formatJobDescription = (description) => {
 
 const JobDetailView = ({ job, isVisible, onClose }) => (
   <div
-    className={`fixed md:relative inset-0 md:inset-auto z-50 md:z-0 ${
+    className={`fixed md:relative inset-0 w-full md:inset-auto z-50 md:z-0 ${
       isVisible ? "block" : "hidden md:block"
     }`}
   >
@@ -250,7 +250,7 @@ const JobCard = ({ job, isSelected, onClick }) => (
         </div>
       </div>
       <p className="mt-4 text-text-tertiary dark:text-text-dark_tertiary line-clamp-2">
-        {/* <JobDescription description={job.description} /> */}
+        {formatJobDescription(job.description)}
       </p>
       <div className="mt-4 flex gap-2 flex-wrap">
         {job.tags?.split(",").map((tag, index) => (
@@ -306,6 +306,7 @@ const JobCard = ({ job, isSelected, onClick }) => (
 );
 
 const JobList = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const job = searchParams.get("job");
   const location = searchParams.get("location");
@@ -315,15 +316,21 @@ const JobList = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
+  const params = new URLSearchParams();
 
   const fetchJobs = async () => {
     try {
       setIsLoading(true);
+      setSelectedJob(null);
       setError(null);
+
+      if (job) params.append("value1", job);
+      if (location) params.append("value2", location);
+
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_URL
-        }/userjobs/search-jobs?value1=${job}&value2=${location}`,
+        }/userjobs/search-jobs?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -347,7 +354,11 @@ const JobList = () => {
   };
 
   useEffect(() => {
-    fetchJobs();
+    if (localStorage.getItem("token")) {
+      fetchJobs();
+    } else {
+      navigate("/");
+    }
   }, [job, location]);
 
   const handleJobSelect = (job) => {
@@ -356,7 +367,7 @@ const JobList = () => {
   };
 
   const LoadingSpinner = () => (
-    <div className="flex items-center justify-center h-64">
+    <div className="fixed top-2/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-50">
       <div className="flex flex-col items-center gap-2">
         <Loader className="w-8 h-8 animate-spin text-primary dark:text-primary-dark" />
         <p className="text-text-secondary dark:text-text-dark_secondary">

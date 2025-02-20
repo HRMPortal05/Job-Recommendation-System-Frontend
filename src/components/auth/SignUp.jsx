@@ -455,7 +455,7 @@ const SignUp = ({ onClose, onLoginClick }) => {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute top-8 right-3 text-text-muted hover:text-text-primary"
+              className="absolute top-8 right-3 text-text-tertiary hover:text-text-primary"
             >
               {showPassword ? (
                 <Eye className="h-5 w-5" />
@@ -480,7 +480,7 @@ const SignUp = ({ onClose, onLoginClick }) => {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute top-8 right-3 text-text-muted hover:text-text-primary"
+              className="absolute top-8 right-3 text-text-tertiary hover:text-text-primary"
             >
               {showPassword ? (
                 <Eye className="h-5 w-5" />

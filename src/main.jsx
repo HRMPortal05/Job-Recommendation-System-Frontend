@@ -38,7 +38,7 @@ const router = createBrowserRouter([
         element: withSnackbar(ForgotPasswordEmail),
       },
       {
-        path: "reset-password",
+        path: `reset-password/:user_id/:temp_token`,
         element: withSnackbar(ResetPassword),
       },
       {

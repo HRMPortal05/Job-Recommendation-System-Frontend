@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import job_hunt from "../../images/job-hunt.svg";
 import { useNavigate } from "react-router-dom";
+import { enqueueSnackbar } from "notistack";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -72,7 +73,14 @@ const LandingPage = () => {
   ];
 
   const findJob = () => {
-    navigate(`/joblist?job=${searchQuery}&location=${location}`);
+    if (localStorage.getItem("token")) {
+      navigate(`/joblist?job=${searchQuery}&location=${location}`);
+    } else {
+      enqueueSnackbar("Please login to find jobs", {
+        variant: "warning",
+        autoHideDuration: 3000,
+      });
+    }
   };
 
   return (

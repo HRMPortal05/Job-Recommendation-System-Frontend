@@ -171,32 +171,31 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
             disabled={isLoading}
           />
 
-          <InputField
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            placeholder="Enter your password"
-            required
-            error={errors.password}
-            disabled={isLoading}
-            icon={
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="text-text-muted hover:text-text-primary focus:outline-none"
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <Eye className="h-5 w-5" />
-                ) : (
-                  <EyeOff className="h-5 w-5" />
-                )}
-              </button>
-            }
-          />
+          <div className="relative">
+            <InputField
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              placeholder="Enter your password"
+              required
+              error={errors.password}
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute top-8 right-3 text-text-tertiary hover:text-text-primary"
+            >
+              {showPassword ? (
+                <Eye className="h-5 w-5" />
+              ) : (
+                <EyeOff className="h-5 w-5" />
+              )}
+            </button>
+          </div>
 
           <button
             type="submit"

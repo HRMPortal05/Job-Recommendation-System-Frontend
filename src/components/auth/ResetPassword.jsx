@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
@@ -7,6 +7,7 @@ import { enqueueSnackbar } from "notistack";
 // Reset Password Component
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const { user_id, temp_token } = useParams();
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
@@ -99,10 +100,11 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/userlogin/reset-password`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/userlogin/reset-password/${user_id}/${temp_token}`,
         {
-          email: resetEmail,
-          newPassword: formData.newPassword,
+          new_password: formData.newPassword,
         },
         {
           headers: {
@@ -111,12 +113,11 @@ const ResetPassword = () => {
         }
       );
 
-      localStorage.removeItem("resetEmail");
       enqueueSnackbar("Password reset successfully!", {
         variant: "success",
         autoHideDuration: 3000,
       });
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to reset password");
     } finally {
@@ -159,9 +160,9 @@ const ResetPassword = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary dark:text-text-dark_tertiary hover:text-text-primary dark:hover:text-text-dark_primary"
                 >
                   {showPasswords.new ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
                     <Eye className="w-5 h-5" />
+                  ) : (
+                    <EyeOff className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -187,9 +188,9 @@ const ResetPassword = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary dark:text-text-dark_tertiary hover:text-text-primary dark:hover:text-text-dark_primary"
                 >
                   {showPasswords.confirm ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
                     <Eye className="w-5 h-5" />
+                  ) : (
+                    <EyeOff className="w-5 h-5" />
                   )}
                 </button>
               </div>

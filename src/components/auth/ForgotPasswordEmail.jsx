@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Mail, CheckCircle } from "lucide-react";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 
-// Email Request Component
 const ForgotPasswordEmail = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isEmailSent, setIsEmailSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,14 +32,12 @@ const ForgotPasswordEmail = () => {
         }
       );
 
+      setIsEmailSent(true);
+
       enqueueSnackbar("Reset link sent to your email!", {
         variant: "success",
         autoHideDuration: 3000,
       });
-
-      // You might want to store the email in localStorage to verify in the reset page
-      localStorage.setItem("resetEmail", email);
-      navigate("/reset-password");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to send reset link");
     } finally {
@@ -58,6 +56,21 @@ const ForgotPasswordEmail = () => {
           {error && (
             <div className="mb-4 p-3 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700 text-warning-700 dark:text-warning-400 rounded">
               {error}
+            </div>
+          )}
+
+          {isEmailSent && (
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg flex items-start">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+              <div className="ml-3">
+                <p className="font-medium text-green-800 dark:text-green-200">
+                  Reset link has been sent!
+                </p>
+                <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                  Please check your email ({email}) and click on the provided
+                  link to reset your password.
+                </p>
+              </div>
             </div>
           )}
 
