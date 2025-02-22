@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./components/main/Navbar";
 import "./index.css";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const App = () => {
   const navigate = useNavigate();
@@ -22,7 +21,6 @@ const App = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1">
-        <SpeedInsights />
         <Outlet />
       </main>
     </div>
