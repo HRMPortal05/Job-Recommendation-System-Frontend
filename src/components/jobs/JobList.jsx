@@ -163,9 +163,9 @@ const JobDetailView = ({ job, isVisible, onClose }) => (
                 <span className="text-text-tertiary dark:text-text-dark_tertiary">
                   Job type
                 </span>
-                {job.category && (
+                {job.jobType && (
                   <div className="font-medium mt-1 text-text-primary dark:text-text-dark_primary">
-                    {job.category}
+                    {job.jobType}
                   </div>
                 )}
               </div>
@@ -340,6 +340,7 @@ const JobList = () => {
       );
 
       const fetchedJobs = response.data;
+      console.log(fetchedJobs);
       setJobs(fetchedJobs);
 
       // Set the first job as selected if jobs exist

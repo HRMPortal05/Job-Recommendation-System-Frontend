@@ -136,7 +136,7 @@ const UserDropdown = ({ onLogout, onLogin }) => {
         {localStorage.getItem("token") ? (
           <>
             <Link
-              to="/profile"
+              to="/userprofile"
               className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
             >
               <User className="h-4 w-4" />
@@ -382,7 +382,10 @@ const Navbar = () => {
                   <span>Login</span>
                 </button>
               )}
-              <button className="hidden md:flex items-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-all duration-200 hover:shadow-lg">
+              <button
+                onClick={() => navigate("/postjob")}
+                className="hidden md:flex items-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-all duration-200 hover:shadow-lg"
+              >
                 <UserPlus className="h-4 w-4" />
                 <span>Post Job</span>
               </button>

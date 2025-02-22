@@ -9,6 +9,7 @@ import ChangePassword from "./components/auth/ChangePassword.jsx";
 import ForgotPasswordEmail from "./components/auth/ForgotPasswordEmail.jsx";
 import ResetPassword from "./components/auth/ResetPassword.jsx";
 import UserProfile from "./components/userprofile/UserProfile.jsx";
+import AddJobForm from "./components/jobs/AddJobForm.jsx";
 
 const withSnackbar = (Component) => (
   <SnackbarProvider maxSnack={3}>
@@ -42,8 +43,12 @@ const router = createBrowserRouter([
         element: withSnackbar(ResetPassword),
       },
       {
-        path: "user-profile",
+        path: "userprofile",
         element: withSnackbar(UserProfile),
+      },
+      {
+        path: "postjob",
+        element: withSnackbar(AddJobForm),
       },
     ],
   },

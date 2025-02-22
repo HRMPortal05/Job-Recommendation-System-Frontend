@@ -98,8 +98,6 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
         onLoginClose();
       }
     } catch (error) {
-      console.error("Login error:", error.response.data.error);
-
       if (error.response) {
         setErrors({
           submit: error.response.data.error,

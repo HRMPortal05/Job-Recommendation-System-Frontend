@@ -200,6 +200,7 @@ const SignUp = ({ onClose, onLoginClick }) => {
       }
 
       const data = await response.json();
+      console.log("Upload response:", data.secure_url);
       setFormData((prev) => ({
         ...prev,
         resumeUrl: data.secure_url,

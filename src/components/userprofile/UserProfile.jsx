@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { User, Phone, Mail, MapPin, Upload } from "lucide-react";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
+import InputFieldCommon from "../fields_hooks/InputFieldCommon";
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -17,7 +18,8 @@ const UserProfile = () => {
     phone: "",
     address: "",
     gender: "",
-    resumeUrl: "",
+    resumeUrl:
+      "https://res.cloudinary.com/duzoeq3dw/image/upload/v1740208672/Odoo_x_Charusat_Hackathon_2025.pdf",
   });
 
   useEffect(() => {
@@ -126,8 +128,9 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark p-4 sm:p-6 lg:p-8">
-      <div className="max-w-3xl mx-auto mt-10">
+      <div className="max-w-3xl mx-auto mt-14">
         <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-sm border border-border dark:border-border-dark p-6">
+          {/* Keep the header section */}
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-text-primary dark:text-text-dark_primary">
               User Profile
@@ -140,6 +143,7 @@ const UserProfile = () => {
             </button>
           </div>
 
+          {/* Keep the error display */}
           {error && (
             <div className="mb-6 p-3 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700 text-warning-700 dark:text-warning-400 rounded">
               {error}
@@ -148,84 +152,52 @@ const UserProfile = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
-                  Username
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2 border border-border dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-dark pl-10 bg-white dark:bg-surface-dark text-text-primary dark:text-text-dark_secondary disabled:bg-surface-100 dark:disabled:bg-surface-dark/50"
-                  />
-                  <User className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary dark:text-text-dark_tertiary" />
-                </div>
-              </div>
+              <InputFieldCommon
+                label="Username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                disabled={!isEditing}
+                icon={User}
+                required
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full px-4 py-2 border border-border dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-dark bg-white dark:bg-surface-dark text-text-primary dark:text-text-dark_secondary disabled:bg-surface-100 dark:disabled:bg-surface-dark/50"
-                />
-              </div>
+              <InputFieldCommon
+                label="First Name"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className="w-full px-4 py-2 border border-border dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-dark bg-white dark:bg-surface-dark text-text-primary dark:text-text-dark_secondary disabled:bg-surface-100 dark:disabled:bg-surface-dark/50"
-                />
-              </div>
+              <InputFieldCommon
+                label="Last Name"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2 border border-border dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-dark pl-10 bg-white dark:bg-surface-dark text-text-primary dark:text-text-dark_secondary disabled:bg-surface-100 dark:disabled:bg-surface-dark/50"
-                  />
-                  <Mail className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary dark:text-text-dark_tertiary" />
-                </div>
-              </div>
+              <InputFieldCommon
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={!isEditing}
+                icon={Mail}
+                required
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
-                  Phone
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2 border border-border dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-dark pl-10 bg-white dark:bg-surface-dark text-text-primary dark:text-text-dark_secondary disabled:bg-surface-100 dark:disabled:bg-surface-dark/50"
-                  />
-                  <Phone className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary dark:text-text-dark_tertiary" />
-                </div>
-              </div>
+              <InputFieldCommon
+                label="Phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                disabled={!isEditing}
+                icon={Phone}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
@@ -246,22 +218,19 @@ const UserProfile = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
-                  Address
-                </label>
-                <div className="relative">
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-border dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 dark:focus:ring-primary-dark pl-10 bg-white dark:bg-surface-dark text-text-primary dark:text-text-dark_secondary disabled:bg-surface-100 dark:disabled:bg-surface-dark/50"
-                  />
-                  <MapPin className="w-5 h-5 absolute left-3 top-3 text-text-tertiary dark:text-text-dark_tertiary" />
-                </div>
+                <InputFieldCommon
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  icon={MapPin}
+                  multiline
+                  rows={3}
+                />
               </div>
 
+              {/* Resume upload section */}
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-2">
                   Resume
@@ -288,17 +257,32 @@ const UserProfile = () => {
                 ) : (
                   formData.resumeUrl && (
                     <div className="mt-2 border border-border dark:border-border-dark rounded-md overflow-hidden">
-                      <iframe
-                        src={formData.resumeUrl}
+                      <object
+                        data={formData.resumeUrl}
+                        type="application/pdf"
                         className="w-full h-96"
-                        title="Resume Preview"
-                      />
+                      >
+                        <div className="p-4 text-center">
+                          <p className="text-text-secondary dark:text-text-dark_secondary mb-2">
+                            Unable to display PDF preview.
+                          </p>
+                          <a
+                            href={formData.resumeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary dark:text-primary-dark hover:underline"
+                          >
+                            Click here to open PDF
+                          </a>
+                        </div>
+                      </object>
                     </div>
                   )
                 )}
               </div>
             </div>
 
+            {/* Keep the submit button section */}
             {isEditing && (
               <div className="flex justify-end">
                 <button
