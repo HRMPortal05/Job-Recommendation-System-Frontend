@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./components/main/Navbar";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./index.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const App = () => {
   const navigate = useNavigate();
