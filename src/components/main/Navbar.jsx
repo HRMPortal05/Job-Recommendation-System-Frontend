@@ -445,7 +445,10 @@ const Navbar = () => {
                     <span>Login</span>
                   </button>
                 )}
-                <button className="w-full flex items-center justify-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors">
+                <button
+                  onClick={() => navigate("/postjob")}
+                  className="w-full flex items-center justify-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors"
+                >
                   <UserPlus className="h-4 w-4" />
                   <span>Post Job</span>
                 </button>
