@@ -206,14 +206,14 @@ const JobDetailView = ({ job, isVisible, onClose }) => (
                     </p>
                   </>
                 )}
-                <p className="text-text-tertiary dark:text-text-dark_tertiary">
+                <div className="text-text-tertiary dark:text-text-dark_tertiary">
                   <div
                     className="prose max-w-none text-text-primary dark:text-text-dark_primary"
                     dangerouslySetInnerHTML={{
                       __html: formatJobDescription(job.description),
                     }}
                   />
-                </p>
+                </div>
               </div>
             </section>
           </div>
@@ -249,9 +249,14 @@ const JobCard = ({ job, isSelected, onClick }) => (
           </div>
         </div>
       </div>
-      <p className="mt-4 text-text-tertiary dark:text-text-dark_tertiary line-clamp-2">
-        {formatJobDescription(job.description)}
-      </p>
+      <div className="mt-4 text-text-tertiary dark:text-text-dark_tertiary line-clamp-2">
+        <div
+          className="prose max-w-none text-text-primary dark:text-text-dark_primary"
+          dangerouslySetInnerHTML={{
+            __html: formatJobDescription(job.description),
+          }}
+        />
+      </div>
       <div className="mt-4 flex gap-2 flex-wrap">
         {job.tags?.split(",").map((tag, index) => (
           <span
@@ -307,16 +312,215 @@ const JobCard = ({ job, isSelected, onClick }) => (
 
 const JobList = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const job = searchParams.get("job");
   const location = searchParams.get("location");
+
+  // State for input fields
+  const [jobInput, setJobInput] = useState(job || "");
+  const [locationInput, setLocationInput] = useState(location || "");
+
+  // State for suggestions
+  const [jobSuggestions, setJobSuggestions] = useState([]);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [showJobSuggestions, setShowJobSuggestions] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [allCities, setAllCities] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
+
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
-  const params = new URLSearchParams();
+
+  // Load city and job data when component mounts
+  useEffect(() => {
+    loadCityData();
+    loadJobData();
+  }, []);
+
+  // Function to load job titles data
+  const loadJobData = async () => {
+    try {
+      // In a real application, this would be an API call to your backend
+      // Using the same sample data as in LandingPage
+      const jobTitles = [
+        // Technology
+        { title: "Software Engineer", category: "Technology" },
+        { title: "Frontend Developer", category: "Technology" },
+        { title: "Backend Developer", category: "Technology" },
+        { title: "Full Stack Developer", category: "Technology" },
+        { title: "Mobile App Developer", category: "Technology" },
+        { title: "DevOps Engineer", category: "Technology" },
+        { title: "Data Engineer", category: "Technology" },
+        { title: "QA Engineer", category: "Technology" },
+
+        // Data Science
+        { title: "Data Scientist", category: "Data Science" },
+        { title: "Machine Learning Engineer", category: "Data Science" },
+        { title: "Data Analyst", category: "Data Science" },
+
+        // Design
+        { title: "UX Designer", category: "Design" },
+        { title: "UI/UX Designer", category: "Design" },
+        { title: "Product Designer", category: "Design" },
+        { title: "Graphic Designer", category: "Design" },
+
+        // Marketing
+        { title: "Marketing Manager", category: "Marketing" },
+        { title: "Digital Marketing Specialist", category: "Marketing" },
+        { title: "Content Strategist", category: "Marketing" },
+        { title: "Social Media Manager", category: "Marketing" },
+
+        // Sales
+        { title: "Sales Representative", category: "Sales" },
+        { title: "Account Executive", category: "Sales" },
+        { title: "Sales Manager", category: "Sales" },
+
+        // Finance
+        { title: "Financial Analyst", category: "Finance" },
+        { title: "Accountant", category: "Finance" },
+
+        // HR
+        { title: "HR Manager", category: "Human Resources" },
+        { title: "Recruiter", category: "Human Resources" },
+      ];
+
+      // Add seniority levels
+      const jobsWithSeniority = [];
+      const seniorityLevels = ["Junior", "Senior", "Lead"];
+
+      // For each job title, create variations with different seniority levels
+      jobTitles.forEach((job) => {
+        // Add the base job title
+        jobsWithSeniority.push(job);
+
+        // Add seniority variations
+        if (!["CTO", "CEO", "CFO"].includes(job.title)) {
+          seniorityLevels.forEach((level) => {
+            jobsWithSeniority.push({
+              title: `${level} ${job.title}`,
+              category: job.category,
+            });
+          });
+        }
+      });
+
+      setAllJobs(jobsWithSeniority);
+    } catch (error) {
+      console.error("Error loading job data:", error);
+      setAllJobs([]);
+    }
+  };
+
+  // Function to load city data
+  const loadCityData = async () => {
+    try {
+      // Import the City and Country modules from country-state-city
+      const { City, Country } = await import("country-state-city");
+
+      // Get all countries
+      const countries = Country.getAllCountries();
+
+      // Create an array to store all cities with their country info
+      let citiesData = [];
+
+      // For each country, get its cities
+      countries.forEach((country) => {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        if (countryCities && countryCities.length > 0) {
+          // Map cities to include country name for display
+          const formattedCities = countryCities.map((city) => ({
+            name: city.name,
+            displayName: `${city.name}, ${country.name}`,
+            countryCode: country.isoCode,
+          }));
+          citiesData = [...citiesData, ...formattedCities];
+        }
+      });
+
+      setAllCities(citiesData);
+    } catch (error) {
+      console.error("Error loading city data:", error);
+      setAllCities([]);
+    }
+  };
+
+  // Real-time job search suggestions
+  useEffect(() => {
+    if (jobInput.length > 1 && allJobs.length > 0) {
+      const searchTerm = jobInput.toLowerCase();
+
+      // Filter jobs based on input
+      const filteredJobs = allJobs
+        .filter((job) => job.title.toLowerCase().includes(searchTerm))
+        // Sort by relevance (exact matches first)
+        .sort((a, b) => {
+          const aStartsWith = a.title.toLowerCase().startsWith(searchTerm);
+          const bStartsWith = b.title.toLowerCase().startsWith(searchTerm);
+
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          return 0;
+        })
+        // Limit to 10 results for performance
+        .slice(0, 10);
+
+      setJobSuggestions(filteredJobs);
+    } else {
+      setJobSuggestions([]);
+      setShowJobSuggestions(false);
+    }
+  }, [jobInput, allJobs]);
+
+  // Real-time location suggestions
+  useEffect(() => {
+    if (locationInput.length > 1 && allCities.length > 0) {
+      const searchTerm = locationInput.toLowerCase();
+
+      // Filter cities based on input
+      const filteredCities = allCities
+        .filter((city) => city.displayName.toLowerCase().includes(searchTerm))
+        // Sort by relevance (city name matches first)
+        .sort((a, b) => {
+          const aNameMatch = a.name.toLowerCase().includes(searchTerm);
+          const bNameMatch = b.name.toLowerCase().includes(searchTerm);
+
+          if (aNameMatch && !bNameMatch) return -1;
+          if (!aNameMatch && bNameMatch) return 1;
+          return 0;
+        })
+        // Limit to 10 results for performance
+        .slice(0, 10);
+
+      setLocationSuggestions(filteredCities);
+    } else {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+    }
+  }, [locationInput, allCities]);
+
+  const selectJobSuggestion = (suggestion) => {
+    setJobInput(suggestion.title);
+    setShowJobSuggestions(false);
+  };
+
+  const selectLocationSuggestion = (suggestion) => {
+    setLocationInput(suggestion.name);
+    setShowLocationSuggestions(false);
+  };
+
+  const handleJobInputBlur = () => {
+    // Delay hiding suggestions to allow click to register
+    setTimeout(() => setShowJobSuggestions(false), 200);
+  };
+
+  const handleLocationInputBlur = () => {
+    // Delay hiding suggestions to allow click to register
+    setTimeout(() => setShowLocationSuggestions(false), 200);
+  };
 
   const fetchJobs = async () => {
     try {
@@ -324,6 +528,7 @@ const JobList = () => {
       setSelectedJob(null);
       setError(null);
 
+      const params = new URLSearchParams();
       if (job) params.append("value1", job);
       if (location) params.append("value2", location);
 
@@ -340,7 +545,7 @@ const JobList = () => {
       );
 
       const fetchedJobs = response.data;
-      console.log(fetchedJobs);
+
       setJobs(fetchedJobs);
 
       // Set the first job as selected if jobs exist
@@ -365,6 +570,18 @@ const JobList = () => {
   const handleJobSelect = (job) => {
     setSelectedJob(job);
     setShowDetail(true);
+  };
+
+  // Handle search form submission
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    // Update the URL params which will trigger the useEffect
+    const newParams = new URLSearchParams();
+    if (jobInput) newParams.set("job", jobInput);
+    if (locationInput) newParams.set("location", locationInput);
+
+    setSearchParams(newParams);
   };
 
   const LoadingSpinner = () => (
@@ -415,27 +632,85 @@ const JobList = () => {
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col md:flex-row gap-4 mb-6"
+          >
+            {/* Job search input with suggestions */}
             <div className="flex-1 relative">
               <input
                 type="text"
                 placeholder="Job title, keywords, or company"
                 className="w-full pl-10 pr-4 py-3 border rounded-lg bg-white dark:bg-hover-dark border-border-DEFAULT dark:border-border-dark text-text-primary dark:text-text-dark_primary placeholder-text-muted dark:placeholder-text-dark_muted focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark focus:border-transparent transition-all"
+                value={jobInput}
+                onChange={(e) => setJobInput(e.target.value)}
+                onFocus={() =>
+                  jobInput.length > 1 && setShowJobSuggestions(true)
+                }
+                onBlur={handleJobInputBlur}
               />
               <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted dark:text-text-dark_muted" />
+
+              {/* Job Suggestions Dropdown */}
+              {showJobSuggestions && jobSuggestions.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-hover-dark border border-border-DEFAULT dark:border-border-dark rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                  {jobSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-text-primary dark:text-text-dark_primary"
+                      onClick={() => selectJobSuggestion(suggestion)}
+                    >
+                      <div className="font-medium">{suggestion.title}</div>
+                      <div className="text-xs text-text-secondary dark:text-text-dark_secondary">
+                        {suggestion.category}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* Location input with suggestions */}
             <div className="flex-1 relative">
               <input
                 type="text"
                 placeholder="Location"
                 className="w-full pl-10 pr-4 py-3 border rounded-lg bg-white dark:bg-hover-dark border-border-DEFAULT dark:border-border-dark text-text-primary dark:text-text-dark_primary placeholder-text-muted dark:placeholder-text-dark_muted focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark focus:border-transparent transition-all"
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
+                onFocus={() =>
+                  locationInput.length > 1 && setShowLocationSuggestions(true)
+                }
+                onBlur={handleLocationInputBlur}
               />
               <MapPin className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted dark:text-text-dark_muted" />
+
+              {/* Location Suggestions Dropdown */}
+              {showLocationSuggestions && locationSuggestions.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-hover-dark border border-border-DEFAULT dark:border-border-dark rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                  {locationSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-text-primary dark:text-text-dark_primary"
+                      onClick={() => selectLocationSuggestion(suggestion)}
+                    >
+                      <div className="font-medium">{suggestion.name}</div>
+                      <div className="text-xs text-text-secondary dark:text-text-dark_secondary">
+                        {suggestion.displayName}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <button className="w-full md:w-auto px-8 py-3 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white rounded-lg font-medium transition-colors">
+
+            <button
+              type="submit"
+              className="w-full md:w-auto px-8 py-3 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white rounded-lg font-medium transition-colors"
+            >
               Find jobs
             </button>
-          </div>
+          </form>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between pt-4 border-t border-border-DEFAULT dark:border-border-dark">
             <div className="flex flex-col md:flex-row gap-4 md:gap-8 mb-4 md:mb-0">

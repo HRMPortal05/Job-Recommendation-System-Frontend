@@ -19,10 +19,264 @@ const LandingPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [isVisible, setIsVisible] = useState(false);
+  const [jobSuggestions, setJobSuggestions] = useState([]);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [showJobSuggestions, setShowJobSuggestions] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [allCities, setAllCities] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
 
   useEffect(() => {
     setIsVisible(true);
+    // Load city data and job data when component mounts
+    loadCityData();
+    loadJobData();
   }, []);
+
+  // Function to load job titles data
+  const loadJobData = async () => {
+    try {
+      // In a real application, this would be an API call to your backend
+      // For now, we'll simulate fetching from a larger dataset
+
+      // This is a more comprehensive list of job titles that would typically come from your API
+      const jobTitles = [
+        // Technology
+        { title: "Software Engineer", category: "Technology" },
+        { title: "Frontend Developer", category: "Technology" },
+        { title: "Backend Developer", category: "Technology" },
+        { title: "Full Stack Developer", category: "Technology" },
+        { title: "Mobile App Developer", category: "Technology" },
+        { title: "DevOps Engineer", category: "Technology" },
+        { title: "Site Reliability Engineer", category: "Technology" },
+        { title: "Cloud Engineer", category: "Technology" },
+        { title: "Systems Administrator", category: "Technology" },
+        { title: "Network Engineer", category: "Technology" },
+        { title: "Security Engineer", category: "Technology" },
+        { title: "Data Engineer", category: "Technology" },
+        { title: "Database Administrator", category: "Technology" },
+        { title: "QA Engineer", category: "Technology" },
+        { title: "Software Architect", category: "Technology" },
+        { title: "Technical Lead", category: "Technology" },
+        { title: "CTO", category: "Technology" },
+        { title: "IT Support Specialist", category: "Technology" },
+
+        // Data Science
+        { title: "Data Scientist", category: "Data Science" },
+        { title: "Machine Learning Engineer", category: "Data Science" },
+        { title: "AI Researcher", category: "Data Science" },
+        { title: "Business Intelligence Analyst", category: "Data Science" },
+        { title: "Data Analyst", category: "Data Science" },
+        { title: "Statistician", category: "Data Science" },
+
+        // Design
+        { title: "UX Designer", category: "Design" },
+        { title: "UI/UX Designer", category: "Design" },
+        { title: "Product Designer", category: "Design" },
+        { title: "Graphic Designer", category: "Design" },
+        { title: "Web Designer", category: "Design" },
+        { title: "Visual Designer", category: "Design" },
+        { title: "Creative Director", category: "Design" },
+
+        // Marketing
+        { title: "Marketing Manager", category: "Marketing" },
+        { title: "Digital Marketing Specialist", category: "Marketing" },
+        { title: "SEO Specialist", category: "Marketing" },
+        { title: "Content Strategist", category: "Marketing" },
+        { title: "Social Media Manager", category: "Marketing" },
+        { title: "Brand Manager", category: "Marketing" },
+        { title: "Growth Hacker", category: "Marketing" },
+        { title: "Copywriter", category: "Marketing" },
+
+        // Sales
+        { title: "Sales Representative", category: "Sales" },
+        { title: "Account Executive", category: "Sales" },
+        { title: "Sales Manager", category: "Sales" },
+        { title: "Business Development Representative", category: "Sales" },
+        { title: "Customer Success Manager", category: "Sales" },
+
+        // Finance
+        { title: "Financial Analyst", category: "Finance" },
+        { title: "Accountant", category: "Finance" },
+        { title: "Investment Banker", category: "Finance" },
+        { title: "Financial Advisor", category: "Finance" },
+        { title: "Risk Analyst", category: "Finance" },
+
+        // HR
+        { title: "HR Manager", category: "Human Resources" },
+        { title: "Recruiter", category: "Human Resources" },
+        { title: "Talent Acquisition Specialist", category: "Human Resources" },
+        { title: "HR Business Partner", category: "Human Resources" },
+        { title: "Compensation Analyst", category: "Human Resources" },
+
+        // Healthcare
+        { title: "Physician", category: "Healthcare" },
+        { title: "Nurse", category: "Healthcare" },
+        { title: "Medical Technician", category: "Healthcare" },
+        { title: "Physical Therapist", category: "Healthcare" },
+        { title: "Pharmacist", category: "Healthcare" },
+
+        // Education
+        { title: "Teacher", category: "Education" },
+        { title: "Professor", category: "Education" },
+        { title: "Tutor", category: "Education" },
+        { title: "School Administrator", category: "Education" },
+        { title: "Education Consultant", category: "Education" },
+
+        // Legal
+        { title: "Lawyer", category: "Legal" },
+        { title: "Paralegal", category: "Legal" },
+        { title: "Legal Assistant", category: "Legal" },
+        { title: "Compliance Officer", category: "Legal" },
+        { title: "Patent Attorney", category: "Legal" },
+      ];
+
+      // Add seniority levels to job titles
+      const jobsWithSeniority = [];
+      const seniorityLevels = [
+        "Junior",
+        "Senior",
+        "Lead",
+        "Principal",
+        "Staff",
+      ];
+
+      // For each job title, create variations with different seniority levels
+      jobTitles.forEach((job) => {
+        // Add the base job title
+        jobsWithSeniority.push(job);
+
+        // Add seniority variations for most jobs (exclude C-level and some others)
+        if (
+          !["CTO", "CEO", "CFO", "Creative Director", "Physician"].includes(
+            job.title
+          )
+        ) {
+          seniorityLevels.forEach((level) => {
+            jobsWithSeniority.push({
+              title: `${level} ${job.title}`,
+              category: job.category,
+            });
+          });
+        }
+      });
+
+      setAllJobs(jobsWithSeniority);
+    } catch (error) {
+      console.error("Error loading job data:", error);
+      setAllJobs([]);
+    }
+  };
+
+  // Function to load city data from the library
+  const loadCityData = async () => {
+    try {
+      // Import the City and Country modules from country-state-city
+      const { City, Country } = await import("country-state-city");
+
+      // Get all countries
+      const countries = Country.getAllCountries();
+
+      // Create an array to store all cities with their country info
+      let citiesData = [];
+
+      // For each country, get its cities
+      countries.forEach((country) => {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+        if (countryCities && countryCities.length > 0) {
+          // Map cities to include country name for display
+          const formattedCities = countryCities.map((city) => ({
+            name: city.name,
+            displayName: `${city.name}, ${country.name}`,
+            countryCode: country.isoCode,
+          }));
+          citiesData = [...citiesData, ...formattedCities];
+        }
+      });
+
+      setAllCities(citiesData);
+    } catch (error) {
+      console.error("Error loading city data:", error);
+      // Fallback to empty array if library fails to load
+      setAllCities([]);
+    }
+  };
+
+  // Real-time job search suggestions
+  useEffect(() => {
+    if (searchQuery.length > 1 && allJobs.length > 0) {
+      const searchTerm = searchQuery.toLowerCase();
+
+      // Filter jobs based on input
+      const filteredJobs = allJobs
+        .filter((job) => job.title.toLowerCase().includes(searchTerm))
+        // Sort by relevance (exact matches first)
+        .sort((a, b) => {
+          const aStartsWith = a.title.toLowerCase().startsWith(searchTerm);
+          const bStartsWith = b.title.toLowerCase().startsWith(searchTerm);
+
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          return 0;
+        })
+        // Limit to 10 results for performance
+        .slice(0, 10);
+
+      setJobSuggestions(filteredJobs);
+      setShowJobSuggestions(filteredJobs.length > 0);
+    } else {
+      setJobSuggestions([]);
+      setShowJobSuggestions(false);
+    }
+  }, [searchQuery, allJobs]);
+
+  // Real-time location suggestions using the library data
+  useEffect(() => {
+    if (location.length > 1 && allCities.length > 0) {
+      const searchTerm = location.toLowerCase();
+
+      // Filter cities based on input
+      const filteredCities = allCities
+        .filter((city) => city.displayName.toLowerCase().includes(searchTerm))
+        // Sort by relevance (city name matches first)
+        .sort((a, b) => {
+          const aNameMatch = a.name.toLowerCase().includes(searchTerm);
+          const bNameMatch = b.name.toLowerCase().includes(searchTerm);
+
+          if (aNameMatch && !bNameMatch) return -1;
+          if (!aNameMatch && bNameMatch) return 1;
+          return 0;
+        })
+        // Limit to 10 results for performance
+        .slice(0, 10);
+
+      setLocationSuggestions(filteredCities);
+      setShowLocationSuggestions(filteredCities.length > 0);
+    } else {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+    }
+  }, [location, allCities]);
+
+  const selectJobSuggestion = (suggestion) => {
+    setSearchQuery(suggestion.title);
+    setShowJobSuggestions(false);
+  };
+
+  const selectLocationSuggestion = (suggestion) => {
+    setLocation(suggestion.name);
+    setShowLocationSuggestions(false);
+  };
+
+  const handleJobInputBlur = () => {
+    // Delay hiding suggestions to allow click to register
+    setTimeout(() => setShowJobSuggestions(false), 200);
+  };
+
+  const handleLocationInputBlur = () => {
+    // Delay hiding suggestions to allow click to register
+    setTimeout(() => setShowLocationSuggestions(false), 200);
+  };
 
   const stats = [
     {
@@ -126,6 +380,7 @@ const LandingPage = () => {
               {/* Search Section */}
               <div className="space-y-4 bg-surface dark:bg-surface-dark p-6 rounded-lg shadow-lg">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Job Search Input with Suggestions */}
                   <div className="relative group">
                     <Search className="absolute left-3 top-3 h-5 w-5 text-text-muted dark:text-text-dark_muted group-hover:text-primary-500 dark:group-hover:text-primary-dark transition-colors duration-200" />
                     <input
@@ -133,9 +388,34 @@ const LandingPage = () => {
                       placeholder="Job title, keywords, or company"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() =>
+                        searchQuery.length > 1 && setShowJobSuggestions(true)
+                      }
+                      onBlur={handleJobInputBlur}
                       className="w-full px-4 pl-10 py-3 rounded-lg border border-border dark:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark bg-surface dark:bg-surface-dark text-text-primary dark:text-text-dark_primary"
                     />
+                    {/* Job Suggestions Dropdown */}
+                    {showJobSuggestions && jobSuggestions.length > 0 && (
+                      <div className="absolute z-10 mt-1 w-full bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                        {jobSuggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="px-4 py-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 cursor-pointer text-text-primary dark:text-text-dark_primary"
+                            onClick={() => selectJobSuggestion(suggestion)}
+                          >
+                            <div className="font-medium">
+                              {suggestion.title}
+                            </div>
+                            <div className="text-xs text-text-secondary dark:text-text-dark_secondary">
+                              {suggestion.category}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Location Input with Suggestions */}
                   <div className="relative group">
                     <MapPin className="absolute left-3 top-3 h-5 w-5 text-text-muted dark:text-text-dark_muted group-hover:text-primary-500 dark:group-hover:text-primary-dark transition-colors duration-200" />
                     <input
@@ -143,8 +423,34 @@ const LandingPage = () => {
                       placeholder="City, state, or remote"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
+                      onFocus={() =>
+                        location.length > 1 && setShowLocationSuggestions(true)
+                      }
+                      onBlur={handleLocationInputBlur}
                       className="w-full px-4 pl-10 py-3 rounded-lg border border-border dark:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-dark bg-surface dark:bg-surface-dark text-text-primary dark:text-text-dark_primary"
                     />
+                    {/* Location Suggestions Dropdown */}
+                    {showLocationSuggestions &&
+                      locationSuggestions.length > 0 && (
+                        <div className="absolute z-10 mt-1 w-full bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                          {locationSuggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              className="px-4 py-2 hover:bg-primary-50 dark:hover:bg-primary-900/30 cursor-pointer text-text-primary dark:text-text-dark_primary"
+                              onClick={() =>
+                                selectLocationSuggestion(suggestion)
+                              }
+                            >
+                              <div className="font-medium">
+                                {suggestion.name}
+                              </div>
+                              <div className="text-xs text-text-secondary dark:text-text-dark_secondary">
+                                {suggestion.displayName}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                   </div>
                 </div>
                 <button
@@ -173,6 +479,9 @@ const LandingPage = () => {
                         opacity: isVisible ? 1 : 0,
                         transitionDelay: `${index * 100}ms`,
                       }}
+                      onClick={() =>
+                        setSearchQuery(tag.split(" ").slice(1).join(" "))
+                      }
                     >
                       {tag}
                     </span>
