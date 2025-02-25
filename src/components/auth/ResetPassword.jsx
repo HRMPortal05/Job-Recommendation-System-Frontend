@@ -91,12 +91,6 @@ const ResetPassword = () => {
 
     if (!validateForm()) return;
 
-    const resetEmail = localStorage.getItem("resetEmail");
-    if (!resetEmail) {
-      navigate("/forgot-password");
-      return;
-    }
-
     setLoading(true);
     try {
       await axios.post(
