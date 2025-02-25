@@ -171,25 +171,36 @@ const LandingPage = () => {
   // Function to load city data from the library
   const loadCityData = async () => {
     try {
-      // Import the City and Country modules from country-state-city
-      const { City, Country } = await import("country-state-city");
+      // Import the City, State, and Country modules from country-state-city
+      const { City, State, Country } = await import("country-state-city");
 
       // Get all countries
       const countries = Country.getAllCountries();
 
-      // Create an array to store all cities with their country info
+      // Create an array to store all cities with their country and state info
       let citiesData = [];
 
       // For each country, get its cities
       countries.forEach((country) => {
         const countryCities = City.getCitiesOfCountry(country.isoCode);
+
         if (countryCities && countryCities.length > 0) {
-          // Map cities to include country name for display
-          const formattedCities = countryCities.map((city) => ({
-            name: city.name,
-            displayName: `${city.name}, ${country.name}`,
-            countryCode: country.isoCode,
-          }));
+          // Map cities to include country and state name for display
+          const formattedCities = countryCities.map((city) => {
+            const state = State.getStateByCodeAndCountry(
+              city.stateCode,
+              country.isoCode
+            );
+            return {
+              name: city.name,
+              displayName: `${city.name}, ${state?.name || "Unknown State"}, ${
+                country.name
+              }`,
+              stateCode: city.stateCode,
+              countryCode: country.isoCode,
+            };
+          });
+
           citiesData = [...citiesData, ...formattedCities];
         }
       });

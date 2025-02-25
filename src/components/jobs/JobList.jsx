@@ -13,56 +13,6 @@ import {
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-// const jobs = [
-//   {
-//     jobId: "1",
-//     title: "Data Analyst",
-//     company: "Norstella",
-//     location: "Remote",
-//     description:
-//       "Each organization (Citeline, Evaluate, MMIT, Panalgo, The Dedham Group) delivers must-have answers for critical strategic and commercial decision-making.",
-//     tasks: ["Evaluate – bring the right drugs to market."],
-//     category: "Full-time",
-//     benefits: [
-//       "Health insurance",
-//       "Life insurance",
-//       "Provident Fund",
-//       "Work from home",
-//     ],
-//     aboutCompany:
-//       "At Norstella, our mission is simple: to help our clients bring life-saving therapies to market quicker—and help patients in need.",
-//     tags: "Data Analysis, Healthcare, Remote",
-//   },
-//   {
-//     jobId: "2",
-//     title: "Business Analyst Track & Trace",
-//     company: "Sandoz",
-//     location: "India",
-//     description:
-//       "Keeps abreast with internal Technology systems and documentation requirements, standards (including quality management and IT security), regulatory environments / requirements (if applicable),...",
-//     category: "Full-time",
-//     salary: "Not disclosed",
-//     postedAt: "Posted recently",
-//     tags: "Business Analysis, Technology, Quality Management",
-//   },
-// ];
-
-// const jobs = [
-//   {
-//     userJobId: "8649cac8-cb46-405e-af58-d368b1ba0989",
-//     title: "UI/UX Developer",
-//     companyName: "TAN Corp",
-//     description:
-//       '\u003Cp\u003EWe are seeking an innovative \u003Cstrong\u003EUI/UX Designer\u003C/strong\u003E with a minimum of 3 years of experience and a portfolio demonstrating user-centric design expertise. This role offers the flexibility to work from anywhere while contributing to meaningful digital experiences in a collaborative environment.\u003C/p\u003E\u003Cp\u003E\u003Cstrong\u003EKey Responsibilities:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EDesign intuitive and visually appealing user interfaces for web and mobile applications.\u003C/li\u003E \u003Cli style=""\u003EConduct user research and create wireframes, prototypes, and mockups.\u003C/li\u003E \u003Cli style=""\u003ECollaborate with cross-functional teams to ensure seamless user experiences.\u003C/li\u003E \u003Cli style=""\u003EStay updated with UI/UX trends, tools, and best practices.\u003C/li\u003E \u003Cli style=""\u003EIterate designs based on user feedback and performance data.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003ERequirements:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003EProficiency in design tools such as Figma, Adobe XD, or Sketch.\u003C/li\u003E \u003Cli style=""\u003EStrong understanding of user-centered design principles.\u003C/li\u003E \u003Cli style=""\u003EExperience creating responsive designs for various devices.\u003C/li\u003E \u003Cli style=""\u003EExcellent communication and collaboration skills.\u003C/li\u003E \u003Cli style=""\u003EA portfolio showcasing UI/UX design projects.\u003C/li\u003E \u003C/ul\u003E\u003Cp\u003E\u003Cstrong\u003EBenefits:\u003C/strong\u003E\u003C/p\u003E\u003Cul style=""\u003E \u003Cli style=""\u003E \u003Cstrong\u003EWork from Anywhere:\u003C/strong\u003E Design in your preferred workspace, wherever that may be.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003EProfessional Growth:\u003C/strong\u003E Opportunities to refine your skills and explore innovative design techniques.\u003C/li\u003E \u003Cli style=""\u003E \u003Cstrong\u003ECreative Collaboration:\u003C/strong\u003E Join a team that values your insights and fosters innovation.\u003C/li\u003E \u003C/ul\u003E\u003Cimg src="https://remotive.com/job/track/1961332/blank.gif?source=public_api" alt=""/\u003E',
-//     contactEmail: "contact@tancorp.com",
-//     tags: "Figma, Wordpress",
-//     companyUrl: "https://www.tancorp.com",
-//     updatedAt: "2025-02-18T00:15:43.737214",
-//     city: "Ahmedabad",
-//     state: "Gujarat",
-//   },
-// ];
-
 const formatJobDescription = (description) => {
   // Replace escaped HTML entities
   let formattedDesc = description
@@ -318,7 +268,9 @@ const JobList = () => {
 
   // State for input fields
   const [jobInput, setJobInput] = useState(job || "");
+  const [initialLocation, setInitialLocation] = useState(true);
   const [locationInput, setLocationInput] = useState(location || "");
+  const [initialJob, setInitialJob] = useState(true);
 
   // State for suggestions
   const [jobSuggestions, setJobSuggestions] = useState([]);
@@ -418,32 +370,51 @@ const JobList = () => {
   // Function to load city data
   const loadCityData = async () => {
     try {
-      // Import the City and Country modules from country-state-city
-      const { City, Country } = await import("country-state-city");
+      // Import the City, State, and Country modules from country-state-city
+      const { City, State, Country } = await import("country-state-city");
 
       // Get all countries
       const countries = Country.getAllCountries();
 
-      // Create an array to store all cities with their country info
+      // Create an array to store all cities with their country and state info
       let citiesData = [];
 
       // For each country, get its cities
       countries.forEach((country) => {
         const countryCities = City.getCitiesOfCountry(country.isoCode);
+
         if (countryCities && countryCities.length > 0) {
-          // Map cities to include country name for display
-          const formattedCities = countryCities.map((city) => ({
-            name: city.name,
-            displayName: `${city.name}, ${country.name}`,
-            countryCode: country.isoCode,
-          }));
+          // Map cities to include country and state name for display
+          const formattedCities = countryCities.map((city) => {
+            const state = State.getStateByCodeAndCountry(
+              city.stateCode,
+              country.isoCode
+            );
+            return {
+              name: city.name,
+              displayName: `${city.name}, ${state?.name || "Unknown State"}, ${
+                country.name
+              }`,
+              stateCode: city.stateCode,
+              countryCode: country.isoCode,
+            };
+          });
+
           citiesData = [...citiesData, ...formattedCities];
         }
       });
 
       setAllCities(citiesData);
+
+      if (initialLocation) {
+        setShowLocationSuggestions(true);
+        setInitialLocation(false);
+      } else {
+        setShowLocationSuggestions(citiesData.length > 0);
+      }
     } catch (error) {
       console.error("Error loading city data:", error);
+      // Fallback to empty array if library fails to load
       setAllCities([]);
     }
   };
@@ -469,6 +440,13 @@ const JobList = () => {
         .slice(0, 10);
 
       setJobSuggestions(filteredJobs);
+
+      if (initialJob) {
+        setShowJobSuggestions(false);
+        setInitialJob(false);
+      } else {
+        setShowJobSuggestions(filteredJobs.length > 0);
+      }
     } else {
       setJobSuggestions([]);
       setShowJobSuggestions(false);
@@ -495,6 +473,7 @@ const JobList = () => {
         // Limit to 10 results for performance
         .slice(0, 10);
 
+      setShowLocationSuggestions(filteredCities.length > 0);
       setLocationSuggestions(filteredCities);
     } else {
       setLocationSuggestions([]);
@@ -529,8 +508,15 @@ const JobList = () => {
       setError(null);
 
       const params = new URLSearchParams();
-      if (job) params.append("value1", job);
-      if (location) params.append("value2", location);
+
+      // If both job and location are missing, pass them as empty values
+      if (!job && !location) {
+        params.append("value1", "");
+        params.append("value2", "");
+      } else {
+        if (job) params.append("value1", job);
+        if (location) params.append("value2", location);
+      }
 
       const response = await axios.get(
         `${
@@ -546,6 +532,7 @@ const JobList = () => {
 
       const fetchedJobs = response.data;
 
+      console.log("fetchedJobs", fetchedJobs);
       setJobs(fetchedJobs);
 
       // Set the first job as selected if jobs exist
@@ -706,6 +693,7 @@ const JobList = () => {
 
             <button
               type="submit"
+              onClick={handleSearch}
               className="w-full md:w-auto px-8 py-3 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white rounded-lg font-medium transition-colors"
             >
               Find jobs
