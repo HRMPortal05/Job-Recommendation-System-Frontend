@@ -296,49 +296,16 @@ const JobList = () => {
   // Function to load job titles data
   const loadJobData = async () => {
     try {
-      // In a real application, this would be an API call to your backend
-      // Using the same sample data as in LandingPage
-      const jobTitles = [
-        // Technology
-        { title: "Software Engineer", category: "Technology" },
-        { title: "Frontend Developer", category: "Technology" },
-        { title: "Backend Developer", category: "Technology" },
-        { title: "Full Stack Developer", category: "Technology" },
-        { title: "Mobile App Developer", category: "Technology" },
-        { title: "DevOps Engineer", category: "Technology" },
-        { title: "Data Engineer", category: "Technology" },
-        { title: "QA Engineer", category: "Technology" },
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/jobtype`,
+        {
+          headers: {
+            "content-Type": "application/json",
+          },
+        }
+      );
 
-        // Data Science
-        { title: "Data Scientist", category: "Data Science" },
-        { title: "Machine Learning Engineer", category: "Data Science" },
-        { title: "Data Analyst", category: "Data Science" },
-
-        // Design
-        { title: "UX Designer", category: "Design" },
-        { title: "UI/UX Designer", category: "Design" },
-        { title: "Product Designer", category: "Design" },
-        { title: "Graphic Designer", category: "Design" },
-
-        // Marketing
-        { title: "Marketing Manager", category: "Marketing" },
-        { title: "Digital Marketing Specialist", category: "Marketing" },
-        { title: "Content Strategist", category: "Marketing" },
-        { title: "Social Media Manager", category: "Marketing" },
-
-        // Sales
-        { title: "Sales Representative", category: "Sales" },
-        { title: "Account Executive", category: "Sales" },
-        { title: "Sales Manager", category: "Sales" },
-
-        // Finance
-        { title: "Financial Analyst", category: "Finance" },
-        { title: "Accountant", category: "Finance" },
-
-        // HR
-        { title: "HR Manager", category: "Human Resources" },
-        { title: "Recruiter", category: "Human Resources" },
-      ];
+      const jobTitles = response.data;
 
       // Add seniority levels
       const jobsWithSeniority = [];

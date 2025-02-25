@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Plus } from "lucide-react";
 import { enqueueSnackbar } from "notistack";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 const AddJobForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     companyName: "",
@@ -32,6 +35,22 @@ const AddJobForm = () => {
       listItems: [""],
     },
   ]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      console.log(decodedToken);
+      const role = decodedToken.roles;
+
+      if (role !== "COMPANY") {
+        navigate("/");
+      }
+    } else {
+      navigate("/");
+    }
+  }, []);
 
   // Load city data when component mounts
   useEffect(() => {

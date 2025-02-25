@@ -32,7 +32,7 @@ const UserProfile = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/login");
+        navigate("/");
         return;
       }
 
@@ -155,6 +155,7 @@ const UserProfile = () => {
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/userlogin/update/${uid}`,
         {
+          username: formData.username,
           firstName: formData.firstName,
           lastName: formData.lastName,
           phone: formData.phone,

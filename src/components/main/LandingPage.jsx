@@ -13,6 +13,7 @@ import {
 import job_hunt from "../../images/job-hunt.svg";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
+import axios from "axios";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -36,100 +37,16 @@ const LandingPage = () => {
   // Function to load job titles data
   const loadJobData = async () => {
     try {
-      // In a real application, this would be an API call to your backend
-      // For now, we'll simulate fetching from a larger dataset
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/jobtype`,
+        {
+          headers: {
+            "content-Type": "application/json",
+          },
+        }
+      );
 
-      // This is a more comprehensive list of job titles that would typically come from your API
-      const jobTitles = [
-        // Technology
-        { title: "Software Engineer", category: "Technology" },
-        { title: "Frontend Developer", category: "Technology" },
-        { title: "Backend Developer", category: "Technology" },
-        { title: "Full Stack Developer", category: "Technology" },
-        { title: "Mobile App Developer", category: "Technology" },
-        { title: "DevOps Engineer", category: "Technology" },
-        { title: "Site Reliability Engineer", category: "Technology" },
-        { title: "Cloud Engineer", category: "Technology" },
-        { title: "Systems Administrator", category: "Technology" },
-        { title: "Network Engineer", category: "Technology" },
-        { title: "Security Engineer", category: "Technology" },
-        { title: "Data Engineer", category: "Technology" },
-        { title: "Database Administrator", category: "Technology" },
-        { title: "QA Engineer", category: "Technology" },
-        { title: "Software Architect", category: "Technology" },
-        { title: "Technical Lead", category: "Technology" },
-        { title: "CTO", category: "Technology" },
-        { title: "IT Support Specialist", category: "Technology" },
-
-        // Data Science
-        { title: "Data Scientist", category: "Data Science" },
-        { title: "Machine Learning Engineer", category: "Data Science" },
-        { title: "AI Researcher", category: "Data Science" },
-        { title: "Business Intelligence Analyst", category: "Data Science" },
-        { title: "Data Analyst", category: "Data Science" },
-        { title: "Statistician", category: "Data Science" },
-
-        // Design
-        { title: "UX Designer", category: "Design" },
-        { title: "UI/UX Designer", category: "Design" },
-        { title: "Product Designer", category: "Design" },
-        { title: "Graphic Designer", category: "Design" },
-        { title: "Web Designer", category: "Design" },
-        { title: "Visual Designer", category: "Design" },
-        { title: "Creative Director", category: "Design" },
-
-        // Marketing
-        { title: "Marketing Manager", category: "Marketing" },
-        { title: "Digital Marketing Specialist", category: "Marketing" },
-        { title: "SEO Specialist", category: "Marketing" },
-        { title: "Content Strategist", category: "Marketing" },
-        { title: "Social Media Manager", category: "Marketing" },
-        { title: "Brand Manager", category: "Marketing" },
-        { title: "Growth Hacker", category: "Marketing" },
-        { title: "Copywriter", category: "Marketing" },
-
-        // Sales
-        { title: "Sales Representative", category: "Sales" },
-        { title: "Account Executive", category: "Sales" },
-        { title: "Sales Manager", category: "Sales" },
-        { title: "Business Development Representative", category: "Sales" },
-        { title: "Customer Success Manager", category: "Sales" },
-
-        // Finance
-        { title: "Financial Analyst", category: "Finance" },
-        { title: "Accountant", category: "Finance" },
-        { title: "Investment Banker", category: "Finance" },
-        { title: "Financial Advisor", category: "Finance" },
-        { title: "Risk Analyst", category: "Finance" },
-
-        // HR
-        { title: "HR Manager", category: "Human Resources" },
-        { title: "Recruiter", category: "Human Resources" },
-        { title: "Talent Acquisition Specialist", category: "Human Resources" },
-        { title: "HR Business Partner", category: "Human Resources" },
-        { title: "Compensation Analyst", category: "Human Resources" },
-
-        // Healthcare
-        { title: "Physician", category: "Healthcare" },
-        { title: "Nurse", category: "Healthcare" },
-        { title: "Medical Technician", category: "Healthcare" },
-        { title: "Physical Therapist", category: "Healthcare" },
-        { title: "Pharmacist", category: "Healthcare" },
-
-        // Education
-        { title: "Teacher", category: "Education" },
-        { title: "Professor", category: "Education" },
-        { title: "Tutor", category: "Education" },
-        { title: "School Administrator", category: "Education" },
-        { title: "Education Consultant", category: "Education" },
-
-        // Legal
-        { title: "Lawyer", category: "Legal" },
-        { title: "Paralegal", category: "Legal" },
-        { title: "Legal Assistant", category: "Legal" },
-        { title: "Compliance Officer", category: "Legal" },
-        { title: "Patent Attorney", category: "Legal" },
-      ];
+      const jobTitles = response.data;
 
       // Add seniority levels to job titles
       const jobsWithSeniority = [];
