@@ -47,9 +47,6 @@ const UserProfile = () => {
           },
         }
       );
-
-      console.log(response.data);
-
       setFormData(response.data);
     } catch (err) {
       setError("Failed to fetch profile data");

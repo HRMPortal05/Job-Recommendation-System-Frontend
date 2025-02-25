@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Plus } from "lucide-react";
 import { enqueueSnackbar } from "notistack";
 import axios from "axios";
@@ -18,6 +18,11 @@ const AddJobForm = () => {
   });
 
   const [tagInput, setTagInput] = useState("");
+  const [allCities, setAllCities] = useState([]);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
 
   const [sections, setSections] = useState([
     {
@@ -27,6 +32,108 @@ const AddJobForm = () => {
       listItems: [""],
     },
   ]);
+
+  // Load city data when component mounts
+  useEffect(() => {
+    loadCityData();
+
+    // Add click outside listener to close suggestions
+    const handleClickOutside = (event) => {
+      if (
+        locationInputRef.current &&
+        !locationInputRef.current.contains(event.target) &&
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target)
+      ) {
+        setShowLocationSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filter cities based on input
+  useEffect(() => {
+    if (formData.city.length > 1 && allCities.length > 0) {
+      const searchTerm = formData.city.toLowerCase();
+
+      // Filter cities based on input
+      const filteredCities = allCities
+        .filter((city) => city.displayName.toLowerCase().includes(searchTerm))
+        // Sort by relevance (city name matches first)
+        .sort((a, b) => {
+          const aNameMatch = a.name.toLowerCase().includes(searchTerm);
+          const bNameMatch = b.name.toLowerCase().includes(searchTerm);
+
+          if (aNameMatch && !bNameMatch) return -1;
+          if (!aNameMatch && bNameMatch) return 1;
+          return 0;
+        })
+        // Limit to 10 results for performance
+        .slice(0, 10);
+
+      setLocationSuggestions(filteredCities);
+      setShowLocationSuggestions(filteredCities.length > 0);
+    } else {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+    }
+  }, [formData.city, allCities]);
+
+  const loadCityData = async () => {
+    try {
+      // Import the City, State, and Country modules from country-state-city
+      const { City, State, Country } = await import("country-state-city");
+
+      // Get all countries
+      const countries = Country.getAllCountries();
+
+      // Create an array to store all cities with their country and state info
+      let citiesData = [];
+
+      // For each country, get its cities
+      countries.forEach((country) => {
+        const countryCities = City.getCitiesOfCountry(country.isoCode);
+
+        if (countryCities && countryCities.length > 0) {
+          // Map cities to include country and state name for display
+          const formattedCities = countryCities.map((city) => {
+            const state = State.getStateByCodeAndCountry(
+              city.stateCode,
+              country.isoCode
+            );
+            return {
+              name: city.name,
+              displayName: `${city.name}, ${state?.name || "Unknown State"}, ${
+                country.name
+              }`,
+              stateName: state?.name || "",
+              stateCode: city.stateCode,
+              countryCode: country.isoCode,
+            };
+          });
+
+          citiesData = [...citiesData, ...formattedCities];
+        }
+      });
+
+      setAllCities(citiesData);
+    } catch (error) {
+      console.error("Error loading city data:", error);
+      // Fallback to empty array if library fails to load
+      setAllCities([]);
+    }
+  };
+
+  const handleCitySelect = (city) => {
+    setFormData({
+      ...formData,
+      city: city.name,
+      state: city.stateName,
+    });
+    setShowLocationSuggestions(false);
+  };
 
   const addSection = () => {
     setSections((prev) => [
@@ -465,7 +572,7 @@ const AddJobForm = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-3">
                   City
                 </label>
@@ -474,11 +581,32 @@ const AddJobForm = () => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
+                  onFocus={() =>
+                    formData.city.length > 1 && setShowLocationSuggestions(true)
+                  }
+                  ref={locationInputRef}
                   className="w-full px-3 py-2 border border-border-DEFAULT dark:border-border-dark rounded-md 
                           bg-white dark:bg-surface-dark
                           text-text-primary dark:text-text-dark_primary
                           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Start typing for suggestions"
                 />
+                {showLocationSuggestions && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute z-10 w-full mt-1 bg-white dark:bg-surface-dark border border-border-DEFAULT dark:border-border-dark rounded-md shadow-lg max-h-60 overflow-auto"
+                  >
+                    {locationSuggestions.map((city, index) => (
+                      <div
+                        key={index}
+                        className="px-3 py-2 hover:bg-primary-50 dark:hover:bg-primary-900 cursor-pointer text-text-primary dark:text-text-dark_primary"
+                        onClick={() => handleCitySelect(city)}
+                      >
+                        {city.displayName}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-text-secondary dark:text-text-dark_secondary mb-3">
