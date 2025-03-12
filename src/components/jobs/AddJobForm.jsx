@@ -41,7 +41,6 @@ const AddJobForm = () => {
 
     if (token) {
       const decodedToken = jwtDecode(token);
-      console.log(decodedToken);
       const role = decodedToken.roles;
 
       if (role !== "COMPANY") {

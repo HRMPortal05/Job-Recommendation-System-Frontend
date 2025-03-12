@@ -144,6 +144,14 @@ const UserDropdown = ({ onLogout, onLogin }) => {
             </Link>
 
             <Link
+              to="/completeprofile"
+              className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
+            >
+              <KeyRound className="h-4 w-4" />
+              <span>Complete Profile</span>
+            </Link>
+
+            <Link
               to="/change-password"
               className="flex items-center space-x-2 px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400 transition-colors"
             >

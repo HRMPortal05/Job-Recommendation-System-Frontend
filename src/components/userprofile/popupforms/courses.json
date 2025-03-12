@@ -1,0 +1,50 @@
+{
+    "Diploma": [
+      "Diploma in Computer Engineering",
+      "Diploma in Information Technology",
+      "Diploma in Electronics and Communication Engineering",
+      "Diploma in Electrical Engineering",
+      "Diploma in Mechanical Engineering",
+      "Diploma in Civil Engineering",
+      "Diploma in Robotics and Automation"
+    ],
+    "Under Graduate": [
+      "B.Tech in Computer Science and Engineering",
+      "B.Tech in Information Technology",
+      "B.Tech in Electronics and Communication Engineering",
+      "B.Tech in Electrical and Electronics Engineering",
+      "B.Tech in Mechanical Engineering",
+      "B.Tech in Civil Engineering",
+      "B.Tech in Artificial Intelligence and Machine Learning",
+      "B.Tech in Data Science",
+      "B.Tech in Robotics and Automation",
+      "B.Tech in Cyber Security",
+      "B.Tech in IoT and Smart Systems"
+    ],
+    "Post Graduate": [
+      "M.Tech in Computer Science and Engineering",
+      "M.Tech in Information Technology",
+      "M.Tech in Electronics and Communication Engineering",
+      "M.Tech in Electrical and Electronics Engineering",
+      "M.Tech in Mechanical Engineering",
+      "M.Tech in Civil Engineering",
+      "M.Tech in Artificial Intelligence and Machine Learning",
+      "M.Tech in Data Science",
+      "M.Tech in Robotics and Automation",
+      "M.Tech in Cyber Security",
+      "M.Tech in IoT and Smart Systems"
+    ],
+    "Doctorate": [
+      "Ph.D in Computer Science and Engineering",
+      "Ph.D in Information Technology",
+      "Ph.D in Electronics and Communication Engineering",
+      "Ph.D in Electrical and Electronics Engineering",
+      "Ph.D in Mechanical Engineering",
+      "Ph.D in Civil Engineering",
+      "Ph.D in Artificial Intelligence and Machine Learning",
+      "Ph.D in Data Science",
+      "Ph.D in Robotics and Automation",
+      "Ph.D in Cyber Security",
+      "Ph.D in IoT and Smart Systems"
+    ]
+  }

@@ -10,6 +10,8 @@ import ForgotPasswordEmail from "./components/auth/ForgotPasswordEmail.jsx";
 import ResetPassword from "./components/auth/ResetPassword.jsx";
 import UserProfile from "./components/userprofile/UserProfile.jsx";
 import AddJobForm from "./components/jobs/AddJobForm.jsx";
+import CompleteProfilePage from "./components/userprofile/CompleteProfilePage.jsx";
+import RemoteJobList from "./components/jobs/RemoteJobList.jsx";
 
 const withSnackbar = (Component) => (
   <SnackbarProvider maxSnack={3}>
@@ -47,8 +49,16 @@ const router = createBrowserRouter([
         element: withSnackbar(UserProfile),
       },
       {
+        path: "completeprofile",
+        element: withSnackbar(CompleteProfilePage),
+      },
+      {
         path: "postjob",
         element: withSnackbar(AddJobForm),
+      },
+      {
+        path: "remote-jobs",
+        element: withSnackbar(RemoteJobList),
       },
     ],
   },
