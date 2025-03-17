@@ -13,16 +13,44 @@ import ProfileSummarySection from "./ProfileSummarySection";
 import InternshipSection from "./InternshipSection";
 import InternshipForm from "./popupforms/InternshipForm";
 import ProfileSidebar from "./ProfileSidebar";
+import { Loader } from "lucide-react";
 
 const CompleteProfilePage = () => {
+  // Define profile sections with their weights for percentage calculation
+  const profileSections = {
+    careerPreferences: {
+      weight: 15,
+      fields: ["preferedJobType", "preferedLocation", "availabilityToWork"],
+    },
+    profileSummary: { weight: 10, fields: ["profileSummary"] },
+    keySkills: { weight: 15, fields: ["keySkills"] },
+    internships: { weight: 15, isArray: true },
+    projects: { weight: 15, isArray: true },
+    education: {
+      weight: 30,
+      nestedFields: {
+        degrees: { isArray: true, weight: 15 },
+        class12: {
+          weight: 7.5,
+          fields: ["board", "percentage", "passingYear"],
+        },
+        class10: {
+          weight: 7.5,
+          fields: ["board", "percentage", "passingYear"],
+        },
+      },
+    },
+  };
+
   const [profileCompletion, setProfileCompletion] = useState(46);
+  const [missingDetails, setMissingDetails] = useState([]);
 
   const [mainData, setMainData] = useState({
     careerPreferences_id: "",
     preferedJobType: "",
     preferedLocation: "",
     profileSummary: "",
-    keySkills: "Java, Spring Boot, PostgreSQL, React",
+    keySkills: "",
     language: "",
     users: {
       user_id: "",
@@ -33,15 +61,7 @@ const CompleteProfilePage = () => {
       resumeUrl:
         "https://res.cloudinary.com/duzoeq3dw/image/upload/v1740208672/Odoo_x_Charusat_Hackathon_2025.pdf",
     },
-    internships: [
-      {
-        internship_id: "",
-        companyName: "ui corp",
-        durationFrom: "may 2025",
-        durationTo: "june 2026",
-        description: "dsjbadsaskdjhabsd",
-      },
-    ],
+    internships: [],
     projects: [
       {
         projects_id: "",
@@ -70,6 +90,140 @@ const CompleteProfilePage = () => {
     },
   });
 
+  // Calculate profile completion percentage
+  useEffect(() => {
+    calculateProfileCompletion(mainData);
+  }, [mainData]);
+
+  const calculateProfileCompletion = (data) => {
+    let totalWeight = 0;
+    let completedWeight = 0;
+    const missingItems = [];
+
+    // Helper function to check if a field is completed
+    const isFieldCompleted = (value) => {
+      if (Array.isArray(value)) {
+        return (
+          value.length > 0 &&
+          value.some((item) =>
+            Object.values(item).some(
+              (val) => val && val.toString().trim() !== ""
+            )
+          )
+        );
+      }
+      return value && value.toString().trim() !== "";
+    };
+
+    // Process each section
+    Object.entries(profileSections).forEach(([sectionKey, sectionConfig]) => {
+      totalWeight += sectionConfig.weight;
+
+      // Handle nested fields (like education)
+      if (sectionConfig.nestedFields) {
+        let nestedTotalWeight = 0;
+        let nestedCompletedWeight = 0;
+
+        Object.entries(sectionConfig.nestedFields).forEach(
+          ([nestedKey, nestedConfig]) => {
+            nestedTotalWeight += nestedConfig.weight;
+
+            if (nestedConfig.isArray) {
+              if (
+                data[sectionKey][nestedKey] &&
+                data[sectionKey][nestedKey].length > 0
+              ) {
+                nestedCompletedWeight += nestedConfig.weight;
+              } else {
+                missingItems.push(
+                  `Add ${nestedKey.replace(/([A-Z])/g, " $1").toLowerCase()}`
+                );
+              }
+            } else {
+              const nestedObj = data[sectionKey][nestedKey];
+              const fieldsToCheck =
+                nestedConfig.fields || Object.keys(nestedObj || {});
+              let fieldCount = 0;
+              let completedCount = 0;
+
+              fieldsToCheck.forEach((field) => {
+                fieldCount++;
+                if (nestedObj && isFieldCompleted(nestedObj[field])) {
+                  completedCount++;
+                }
+              });
+
+              if (fieldCount > 0) {
+                const completionRatio =
+                  fieldCount > 0 ? completedCount / fieldCount : 0;
+                nestedCompletedWeight += nestedConfig.weight * completionRatio;
+
+                if (completionRatio < 1) {
+                  missingItems.push(
+                    `Add ${nestedKey
+                      .replace(/([A-Z])/g, " $1")
+                      .toLowerCase()} details`
+                  );
+                }
+              }
+            }
+          }
+        );
+
+        completedWeight +=
+          sectionConfig.weight * (nestedCompletedWeight / nestedTotalWeight);
+      }
+      // Handle array fields (like internships, projects)
+      else if (sectionConfig.isArray) {
+        if (
+          data[sectionKey] &&
+          data[sectionKey].length > 0 &&
+          data[sectionKey].some((item) =>
+            Object.values(item).some(
+              (val) => val && val.toString().trim() !== ""
+            )
+          )
+        ) {
+          completedWeight += sectionConfig.weight;
+        } else {
+          missingItems.push(
+            `Add ${sectionKey.replace(/([A-Z])/g, " $1").toLowerCase()}`
+          );
+        }
+      }
+      // Handle regular fields
+      else {
+        const fieldsToCheck = sectionConfig.fields || [sectionKey];
+        let fieldCount = 0;
+        let completedCount = 0;
+
+        fieldsToCheck.forEach((field) => {
+          fieldCount++;
+          if (isFieldCompleted(data[field])) {
+            completedCount++;
+          }
+        });
+
+        if (fieldCount > 0) {
+          const completionRatio = completedCount / fieldCount;
+          completedWeight += sectionConfig.weight * completionRatio;
+
+          if (completionRatio < 1) {
+            missingItems.push(
+              `Add ${sectionKey.replace(/([A-Z])/g, " $1").toLowerCase()}`
+            );
+          }
+        }
+      }
+    });
+
+    const percentageCompleted = Math.round(
+      (completedWeight / totalWeight) * 100
+    );
+    setProfileCompletion(percentageCompleted);
+    setMissingDetails(missingItems.slice(0, 11));
+  };
+
   const [showEducationForm, setShowEducationForm] = useState(false);
   const [showCareerPopup, setShowCareerPopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -82,17 +236,66 @@ const CompleteProfilePage = () => {
   const [educationType, setEducationType] = useState(null);
   const [currentEditIndex, setCurrentEditIndex] = useState(null);
 
+  const fetchMainData = async () => {
+    setIsLoading(true);
+    const token = localStorage.getItem("token");
+    const uid = jwtDecode(token).user_id;
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/career-preferences/getByUserId/${uid}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response.data);
+      setMainData(response.data);
+    } catch (error) {
+      console.error("Error fetching main data:", error);
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/");
+    } else {
+      fetchMainData();
+    }
+  }, []);
+
   // Update career preferences
   const updateCareerPreferences = async (updatedPreferences) => {
-    const token = localStorage.getItem("token");
-    const decodedToken = jwtDecode(token);
-    const userId = decodedToken.user_id;
-
     setIsLoading(true);
+    const token = localStorage.getItem("token");
+    const uid = jwtDecode(token).user_id;
+
+    if (!token) {
+      console.error("No token found");
+      setIsLoading(false);
+      return;
+    } else {
+      const response = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/career-preferences/add/${uid}`,
+        updatedPreferences,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    }
 
     try {
       // API call commented out
-      console.log("Updated career preferences:", updatedPreferences);
 
       // Update mainData instead of separate careerPreferences state
       setMainData((prevData) => ({
@@ -140,20 +343,20 @@ const CompleteProfilePage = () => {
   // Handle saving education data
   const handleSaveEducation = (data) => {
     setMainData((prevData) => {
-      if (educationType === "class12") {
+      if (educationType === "classXII") {
         return {
           ...prevData,
           education: {
             ...prevData.education,
-            class12: data,
+            class12: { ...prevData.education.class12, ...data },
           },
         };
-      } else if (educationType === "class10") {
+      } else if (educationType === "classX") {
         return {
           ...prevData,
           education: {
             ...prevData.education,
-            class10: data,
+            class10: { ...prevData.education.class10, ...data },
           },
         };
       }
@@ -187,6 +390,8 @@ const CompleteProfilePage = () => {
         },
       };
     });
+
+    console.log("Graduate data saved:", mainData.education.degrees);
 
     // Reset UI states
     setShowEducationForm(false);
@@ -282,10 +487,45 @@ const CompleteProfilePage = () => {
     setShowInternshipsForm(false);
   };
 
+  const handleDeleteInternship = (index, internshipId) => {
+    const updatedInternships = [...mainData.internships];
+
+    updatedInternships.splice(index, 1);
+
+    // Update the state with the new array
+    setMainData((prevData) => ({
+      ...prevData,
+      internships: updatedInternships,
+    }));
+
+    setShowInternshipsForm(false);
+    setCurrentEditIndex(null);
+  };
+
   const handleCancelInternship = () => {
     setCurrentEditIndex(null);
     setShowInternshipsForm(false);
   };
+
+  // Determine profile strength level based on percentage
+  const getProfileStrength = (percentage) => {
+    if (percentage < 40) return "Basic";
+    if (percentage < 70) return "Intermediate";
+    return "Advanced";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-background-light dark:bg-background-dark bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-30">
+        <div className="rounded-lg p-6 flex flex-col items-center gap-2">
+          <Loader className="w-8 h-8 animate-spin text-primary dark:text-primary-dark" />
+          <p className="text-text-secondary dark:text-text-dark_secondary">
+            Loading Profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
@@ -347,75 +587,41 @@ const CompleteProfilePage = () => {
                   </div>
                   <div className="text-text-primary dark:text-text-dark_primary">
                     <div className="text-sm mb-1">Profile strength</div>
-                    <div className="font-medium">Basic</div>
+                    <div className="font-medium">
+                      {getProfileStrength(profileCompletion)}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <div className="flex items-center justify-between p-3 bg-surface-DEFAULT dark:bg-surface-dark rounded-md border border-border-DEFAULT dark:border-border-dark">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-text-tertiary dark:text-text-dark_tertiary"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                    </svg>
-                    <span className="text-text-secondary dark:text-text-dark_secondary">
-                      Add details
+                {missingDetails.slice(0, 3).map((detail, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-surface-DEFAULT dark:bg-surface-dark rounded-md border border-border-DEFAULT dark:border-border-dark"
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-text-tertiary dark:text-text-dark_tertiary"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                      </svg>
+                      <span className="text-text-secondary dark:text-text-dark_secondary">
+                        {detail}
+                      </span>
+                    </div>
+                    <span className="text-success-500 dark:text-success-dark text-sm">
+                      ↑ {Math.floor(5 + Math.random() * 5)}%
                     </span>
                   </div>
-                  <span className="text-success-500 dark:text-success-dark text-sm">
-                    ↑ 8%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-surface-DEFAULT dark:bg-surface-dark rounded-md border border-border-DEFAULT dark:border-border-dark">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-text-tertiary dark:text-text-dark_tertiary"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                    </svg>
-                    <span className="text-text-secondary dark:text-text-dark_secondary">
-                      Add details
-                    </span>
-                  </div>
-                  <span className="text-success-500 dark:text-success-dark text-sm">
-                    ↑ 7%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-surface-DEFAULT dark:bg-surface-dark rounded-md border border-border-DEFAULT dark:border-border-dark">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-text-tertiary dark:text-text-dark_tertiary"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                      <path
-                        fillRule="evenodd"
-                        d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-text-secondary dark:text-text-dark_secondary">
-                      Add competitive exam
-                    </span>
-                  </div>
-                  <span className="text-success-500 dark:text-success-dark text-sm">
-                    ↑ 6%
-                  </span>
-                </div>
+                ))}
               </div>
 
               <button className="w-full bg-warning-500 hover:bg-warning-600 dark:bg-warning-dark dark:hover:bg-warning-600 text-white py-3 px-4 rounded-md font-medium">
-                Add 11 missing details
+                Add {missingDetails.length} missing details
               </button>
             </div>
 
@@ -453,18 +659,18 @@ const CompleteProfilePage = () => {
             {showEducationPopup && (
               <EducationPopup
                 educationType={
-                  educationType === "class12"
+                  educationType === "classXII"
                     ? "classXII"
-                    : educationType === "class10"
+                    : educationType === "classX"
                     ? "classX"
                     : educationType
                 }
                 onClose={handleCloseEducationPopup}
                 onSave={handleSaveEducation}
                 initialData={
-                  educationType === "class12"
+                  educationType === "classXII"
                     ? mainData.education.class12
-                    : educationType === "class10"
+                    : educationType === "classX"
                     ? mainData.education.class10
                     : null
                 }
@@ -531,6 +737,7 @@ const CompleteProfilePage = () => {
               <InternshipForm
                 onCancel={handleCancelInternship}
                 onSave={handleSaveInternships}
+                onDelete={handleDeleteInternship}
                 initialInternships={
                   currentEditIndex !== null
                     ? mainData.internships[currentEditIndex]

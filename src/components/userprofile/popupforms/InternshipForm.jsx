@@ -5,6 +5,7 @@ const InternshipForm = ({
   onCancel,
   initialInternships,
   editIndex,
+  onDelete,
 }) => {
   // Reusable months array for dropdown options
   const months = [
@@ -163,6 +164,12 @@ const InternshipForm = ({
     if (onCancel) onCancel();
   };
 
+  const handleDelete = () => {
+    if (onDelete && editIndex !== null && initialInternships?.internship_id) {
+      onDelete(editIndex, initialInternships.internship_id);
+    }
+  };
+
   // Helper function to get input class based on error state
   const getInputClass = (fieldName) => {
     return `w-full p-3 border ${
@@ -182,22 +189,47 @@ const InternshipForm = ({
             </h2>
             <p className="text-gray-600">Show your professional learnings</p>
           </div>
-          <button className="text-text-tertiary" onClick={handleCancel}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <div className="flex items-center gap-3">
+            {editIndex !== null && (
+              <button
+                className="text-red-500 hover:text-red-700"
+                onClick={handleDelete}
+                type="button"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                </svg>
+              </button>
+            )}
+            <button className="text-text-tertiary" onClick={handleCancel}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>

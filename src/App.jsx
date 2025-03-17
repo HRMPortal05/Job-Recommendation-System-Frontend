@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./components/main/Navbar";
 import "./index.css";
+import { requestNotificationPermission } from "./components/fields_hooks/requestNotificationPermission";
 
 const App = () => {
   const navigate = useNavigate();
@@ -16,6 +17,10 @@ const App = () => {
       navigate("/", { replace: true });
     }
   }, [location, navigate]);
+
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">

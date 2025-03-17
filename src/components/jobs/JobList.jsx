@@ -498,8 +498,6 @@ const JobList = () => {
       );
 
       const fetchedJobs = response.data;
-
-      console.log("fetchedJobs", fetchedJobs);
       setJobs(fetchedJobs);
 
       // Set the first job as selected if jobs exist

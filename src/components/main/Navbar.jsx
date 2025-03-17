@@ -82,9 +82,9 @@ const NavDropdown = ({ title, items = [] }) => {
       >
         <div className="absolute h-2 w-full -top-2 bg-transparent" />
         {items.map((item, index) => (
-          <a
+          <Link
             key={index}
-            href={item.href || "#"}
+            to={item.href || "#"}
             className={`block px-4 py-2 text-text-secondary dark:text-text-dark_secondary hover:bg-primary-50 dark:hover:bg-surface-dark hover:text-primary dark:hover:text-primary-400
               transition-all duration-200 ease-in-out
               ${
@@ -95,7 +95,7 @@ const NavDropdown = ({ title, items = [] }) => {
             style={{ transitionDelay: `${index * 50}ms` }}
           >
             {item.label}
-          </a>
+          </Link>
         ))}
       </div>
     </div>
@@ -213,8 +213,8 @@ const Navbar = () => {
     {
       title: "Find Jobs",
       items: [
-        { label: "Job Listing", href: "#" },
-        { label: "Job Details", href: "#" },
+        { label: "Find Job", href: "joblist?job=&location=" },
+        { label: "Remote Job", href: "remote-jobs" },
         { label: "Apply Now", href: "#" },
       ],
     },

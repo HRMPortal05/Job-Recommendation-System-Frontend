@@ -18,6 +18,8 @@
     "@react-pdf/renderer": "^4.2.2",
     "axios": "^1.7.9",
     "country-state-city": "^3.2.1",
+    "firebase": "^11.4.0",
+    "framer-motion": "^12.5.0",
     "job-recommendation-system": "file:",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.469.0",

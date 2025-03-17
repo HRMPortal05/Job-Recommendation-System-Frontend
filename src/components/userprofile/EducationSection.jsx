@@ -27,9 +27,9 @@ const EducationSection = ({
             Graduate Education
           </h4>
 
-          {educationData.graduate && educationData.graduate.length > 0 ? (
+          {educationData.degrees && educationData.degrees.length > 0 ? (
             <div>
-              {educationData.graduate.map((grad, index) => (
+              {educationData.degrees.map((grad, index) => (
                 <div
                   key={index}
                   className="flex justify-between items-start mb-4"
@@ -85,25 +85,25 @@ const EducationSection = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Class XII Details */}
+          {/* Class 12 Details */}
           <div className="p-4 border border-border-DEFAULT dark:border-border-dark rounded-md">
-            {educationData.classXII &&
-            educationData.classXII.board &&
-            educationData.classXII.mediumOfStudy &&
-            educationData.classXII.percentage &&
-            educationData.classXII.passingYear ? (
+            {educationData.class12 &&
+            educationData.class12.board &&
+            educationData.class12.mediumOfStudy &&
+            educationData.class12.percentage &&
+            educationData.class12.passingYear ? (
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-medium text-text-primary dark:text-text-dark_primary mb-1">
                     Class XII
                   </h4>
                   <p className="text-text-secondary dark:text-text-dark_secondary mb-1">
-                    {educationData.classXII.board},{" "}
-                    {educationData.classXII.mediumOfStudy}
+                    {educationData.class12.board},{" "}
+                    {educationData.class12.mediumOfStudy}
                   </p>
                   <p className="text-text-tertiary dark:text-text-dark_tertiary">
-                    Scored {educationData.classXII.percentage}%, Passed out in{" "}
-                    {educationData.classXII.passingYear}
+                    Scored {educationData.class12.percentage}%, Passed out in{" "}
+                    {educationData.class12.passingYear}
                   </p>
                 </div>
                 <button
@@ -137,23 +137,23 @@ const EducationSection = ({
 
           {/* Class X Details */}
           <div className="p-4 border border-border-DEFAULT dark:border-border-dark rounded-md">
-            {educationData.classX &&
-            educationData.classX.board &&
-            educationData.classX.mediumOfStudy &&
-            educationData.classX.percentage &&
-            educationData.classX.passingYear ? (
+            {educationData.class10 &&
+            educationData.class10.board &&
+            educationData.class10.mediumOfStudy &&
+            educationData.class10.percentage &&
+            educationData.class10.passingYear ? (
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-medium text-text-primary dark:text-text-dark_primary mb-1">
                     Class X
                   </h4>
                   <p className="text-text-secondary dark:text-text-dark_secondary mb-1">
-                    {educationData.classX.board},{" "}
-                    {educationData.classX.mediumOfStudy}
+                    {educationData.class10.board},{" "}
+                    {educationData.class10.mediumOfStudy}
                   </p>
                   <p className="text-text-tertiary dark:text-text-dark_tertiary">
-                    Scored {educationData.classX.percentage}%, Passed out in{" "}
-                    {educationData.classX.passingYear}
+                    Scored {educationData.class10.percentage}%, Passed out in{" "}
+                    {educationData.class10.passingYear}
                   </p>
                 </div>
                 <button

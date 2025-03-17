@@ -9,6 +9,7 @@ import {
   Filter,
   Briefcase,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const RemoteJobList = () => {
   const [expandedJobId, setExpandedJobId] = useState(null);
@@ -22,7 +23,7 @@ const RemoteJobList = () => {
       url: "https://remotive.com/remote-jobs/design/mid-to-senior-ux-ui-designer-1963367",
       title: "Mid to Senior UX/UI Designer",
       company_name: "Zemogajobs",
-      company_logo: "https://remotive.com/job/1963367/logo",
+      company_logo: "https://remotive.com/job/1591692/logo",
       category: "Design",
       tags: [
         "UI/UX",
@@ -127,20 +128,30 @@ const RemoteJobList = () => {
     });
   };
 
+  // Shutter segments - more segments for a more realistic shutter effect
+  const shutterSegments = 1;
+
   return (
-    <div className="bg-gray-50 dark:bg-background-dark min-h-screen">
+    <div className="bg-gray-50 dark:bg-background-darker min-h-screen">
       {/* Hero section */}
       <div className="max-w-6xl mx-auto px-4 mt-16">
-        <div className="bg-white dark:bg-background-dark rounded-lg shadow-sm dark:shadow-gray-800 p-6">
+        <div className="bg-white dark:bg-background-dark rounded-lg p-6">
           <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2">
             Find Your Perfect Remote Opportunity
           </h2>
           <p className="text-sm md:text-base text-text-secondary dark:text-text-dark_secondary mb-4">
             Discover roles that match your profile, skills, and experience
           </p>
-          <p className="text-surface-dark dark:text-text-dark_secondary/100 text-lg mb-8">
-            Based on your profile details
-          </p>
+          {/* Enhanced "Based on your profile details" text */}
+          <div className="flex items-center mb-8">
+            <div className="w-1 h-6 bg-primary dark:bg-primary-dark rounded-full mr-3"></div>
+            <p className="text-lg font-medium text-primary dark:text-primary-dark">
+              Personalized recommendations{" "}
+              <span className="text-text-secondary dark:text-text-dark_secondary font-normal">
+                based on your profile
+              </span>
+            </p>
+          </div>
 
           {/* Enhanced Search bar in hero */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-lg">
@@ -255,7 +266,7 @@ const RemoteJobList = () => {
               filteredJobs.map((job) => (
                 <div
                   key={job.id}
-                  className="bg-white dark:bg-surface-dark border border-gray-200 rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
+                  className="bg-white dark:bg-background-dark border border-border-DEFAULT dark:border-border-dark rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   <div
                     className="p-5 cursor-pointer"
@@ -265,7 +276,10 @@ const RemoteJobList = () => {
                       <div className="w-12 h-12 bg-gray-100 dark:bg-hover-dark rounded-md flex items-center justify-center overflow-hidden flex-shrink-0">
                         {job.company_logo ? (
                           <img
-                            src={job.company_logo}
+                            src={
+                              job.company_logo ||
+                              "https://via.placeholder.com/150"
+                            }
                             alt={`${job.company_name} logo`}
                             className="w-full h-full object-contain"
                           />
@@ -298,7 +312,6 @@ const RemoteJobList = () => {
                           </span>
                         </div>
 
-                        {/* Job Salary if available */}
                         {job.salary && (
                           <div className="mt-3 text-success-700 dark:text-success-dark text-sm font-medium">
                             {job.salary}
@@ -312,7 +325,6 @@ const RemoteJobList = () => {
                           <span>{formatDate(job.publication_date)}</span>
                         </div>
 
-                        {/* Toggle button */}
                         <button className="mt-2 flex items-center text-primary dark:text-primary-dark hover:text-primary-hover dark:hover:text-primary-dark_hover">
                           <span className="mr-1 text-sm">
                             {expandedJobId === job.id
@@ -329,52 +341,94 @@ const RemoteJobList = () => {
                     </div>
                   </div>
 
-                  {/* Expanded content */}
-                  {expandedJobId === job.id && (
-                    <div className="px-5 pb-5 border-t border-gray-200 pt-4">
-                      {/* Description */}
-                      <div className="mb-4">
-                        <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2">
-                          Job Description
-                        </h3>
-                        <p className="text-text-secondary dark:text-text-dark_secondary text-sm">
-                          {job.description}
-                        </p>
+                  {/* Metal shutter effect for expanded content */}
+                  <AnimatePresence>
+                    {expandedJobId === job.id && (
+                      <div className="relative overflow-hidden">
+                        {/* Shutter segments */}
+                        {[...Array(shutterSegments)].map((_, index) => (
+                          <motion.div
+                            key={`shutter-${index}`}
+                            initial={{
+                              x: 0,
+                              y: -10,
+                              opacity: 0,
+                              height: 0,
+                            }}
+                            animate={{
+                              x: 0,
+                              y: 0,
+                              opacity: 1,
+                              height: "auto",
+                            }}
+                            exit={{
+                              x: 0,
+                              y: -10,
+                              opacity: 0,
+                              height: 0,
+                            }}
+                            transition={{
+                              duration: 0.4,
+                              ease: "easeInOut",
+                              delay: index * 0.05, // Staggered animation
+                            }}
+                            className="border-t border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
+                            style={{
+                              boxShadow: "0 2px 3px rgba(0,0,0,0.1)",
+                              transformOrigin: "top",
+                              height:
+                                index === shutterSegments - 1 ? "auto" : "8px",
+                            }}
+                          >
+                            {/* Shutter segment content - only visible in the last segment */}
+                            {index === shutterSegments - 1 && (
+                              <div className="px-5 py-4">
+                                {/* Description */}
+                                <div className="mb-4">
+                                  <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2">
+                                    Job Description
+                                  </h3>
+                                  <p className="text-text-secondary dark:text-text-dark_secondary text-sm">
+                                    {job.description}
+                                  </p>
+                                </div>
+                                {/* Tags */}
+                                {job.tags && job.tags.length > 0 && (
+                                  <div className="mb-4">
+                                    <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2 flex items-center">
+                                      <Tag size={14} className="mr-2" />
+                                      Skills & Technologies
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                      {job.tags.map((tag, index) => (
+                                        <span
+                                          key={index}
+                                          className="px-3 py-1 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-dark text-xs font-medium rounded-full"
+                                        >
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {/* Apply button */}
+                                <div className="flex justify-end">
+                                  <a
+                                    href={job.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-5 py-2 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white rounded-lg transition-colors duration-200 font-medium"
+                                  >
+                                    Apply Now
+                                  </a>
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
                       </div>
-
-                      {/* Tags */}
-                      {job.tags && job.tags.length > 0 && (
-                        <div className="mb-4">
-                          <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2 flex items-center">
-                            <Tag size={14} className="mr-2" />
-                            Skills & Technologies
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            {job.tags.map((tag, index) => (
-                              <span
-                                key={index}
-                                className="px-3 py-1 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-dark text-xs font-medium rounded-full"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Apply button */}
-                      <div className="flex justify-end">
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-5 py-2 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white rounded-lg transition-colors duration-200 font-medium"
-                        >
-                          Apply Now
-                        </a>
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </AnimatePresence>
                 </div>
               ))
             ) : (
@@ -389,7 +443,7 @@ const RemoteJobList = () => {
 
           {/* Right column - Sidebar */}
           <div className="hidden lg:block">
-            <div className="bg-white dark:bg-surface-dark border border-gray-200 rounded-lg p-5 sticky top-4">
+            <div className="bg-white dark:bg-background-dark border border-border-DEFAULT dark:border-border-dark rounded-lg p-5 sticky top-4">
               <h3 className="text-surface-dark dark:text-white font-semibold text-lg mb-4">
                 Popular Job Categories
               </h3>
@@ -413,7 +467,7 @@ const RemoteJobList = () => {
                 )}
               </ul>
 
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="mt-8 pt-6 border-t border-border-DEFAULT dark:border-border-dark border-gray-200">
                 <h3 className="text-surface-dark dark:text-white font-semibold text-lg mb-4">
                   Job Search Tips
                 </h3>

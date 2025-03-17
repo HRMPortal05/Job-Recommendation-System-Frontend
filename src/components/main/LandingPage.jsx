@@ -14,6 +14,7 @@ import job_hunt from "../../images/job-hunt.svg";
 import { useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
 import axios from "axios";
+import { requestNotificationPermission } from "../fields_hooks/requestNotificationPermission";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -264,6 +265,14 @@ const LandingPage = () => {
       });
     }
   };
+
+  useEffect(() => {
+    requestNotificationPermission().then((token) => {
+      if (token) {
+        alert("Your FCM Token: " + token);
+      }
+    });
+  }, []);
 
   return (
     <div className="flex flex-col">
