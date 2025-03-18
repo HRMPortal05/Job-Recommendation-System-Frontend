@@ -266,16 +266,31 @@ const LandingPage = () => {
     }
   };
 
+  const [token, setToken] = useState("");
   useEffect(() => {
-    requestNotificationPermission().then((token) => {
-      if (token) {
-        navigator.clipboard
-          .writeText(token)
-          .then(() => console.log("FCM Token copied to clipboard!"))
-          .catch((err) => console.error("Failed to copy token:", err));
+    requestNotificationPermission().then((fcmToken) => {
+      if (fcmToken) {
+        setToken(fcmToken);
       }
     });
   }, []);
+  const copyToClipboard = () => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard
+        .writeText(token)
+        .then(() => alert("FCM Token copied!"))
+        .catch(() => alert("Copy failed! Please copy manually."));
+    } else {
+      // Fallback for older devices
+      const textarea = document.createElement("textarea");
+      textarea.value = token;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      alert("FCM Token copied!");
+    }
+  };
 
   return (
     <div className="flex flex-col">
@@ -428,6 +443,28 @@ const LandingPage = () => {
                   ))}
                 </div>
               </div>
+            </div>
+
+            <div className="p-4">
+              <h2 className="text-lg font-bold">FCM Token</h2>
+              {token ? (
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={token}
+                    readOnly
+                    className="p-2 border rounded-md w-full"
+                  />
+                  <button
+                    onClick={copyToClipboard}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                  >
+                    Copy Token
+                  </button>
+                </div>
+              ) : (
+                <p>Fetching token...</p>
+              )}
             </div>
 
             {/* Right Side */}
