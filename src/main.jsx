@@ -39,9 +39,14 @@ const router = createBrowserRouter([
       {
         path: "joblist",
         element: (
-          <Suspense fallback={<div>Loading...</div>}>
-            <JobList />
-          </Suspense>
+          <Route
+            path="joblist"
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <JobList />
+              </Suspense>
+            }
+          />
         ),
       },
       {
