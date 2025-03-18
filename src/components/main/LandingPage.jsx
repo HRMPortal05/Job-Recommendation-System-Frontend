@@ -267,7 +267,14 @@ const LandingPage = () => {
   };
 
   useEffect(() => {
-    requestNotificationPermission().then((token) => {});
+    requestNotificationPermission().then((token) => {
+      if (token) {
+        navigator.clipboard
+          .writeText(token)
+          .then(() => console.log("FCM Token copied to clipboard!"))
+          .catch((err) => console.error("Failed to copy token:", err));
+      }
+    });
   }, []);
 
   return (
