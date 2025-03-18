@@ -42,7 +42,7 @@ export const requestNotificationPermission = async () => {
   // First make sure messaging is initialized
   const isMessagingSupported = await initializeFirebaseMessaging();
   if (!isMessagingSupported) {
-    console.warn("Notification features unavailable on this browser/device");
+    alert("Notification features unavailable on this browser/device");
     return null;
   }
 
