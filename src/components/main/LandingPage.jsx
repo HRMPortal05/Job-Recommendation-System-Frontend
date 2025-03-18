@@ -445,7 +445,7 @@ const LandingPage = () => {
               </div>
             </div>
 
-            <div className="p-4 block md:hidden lg:hidden">
+            {/* <div className="p-4 block md:hidden lg:hidden">
               <h2 className="text-lg font-bold">FCM Token</h2>
               {token ? (
                 <div className="flex flex-col gap-2">
@@ -465,7 +465,7 @@ const LandingPage = () => {
               ) : (
                 <p>Fetching token...2</p>
               )}
-            </div>
+            </div> */}
 
             {/* Right Side */}
             <div
