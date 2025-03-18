@@ -23,14 +23,15 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    chunkSizeWarningLimit: 2000, // Increase limit (if needed)
+    chunkSizeWarningLimit: 1000, // Reduce chunk size limit
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("react")) return "react-vendor";
-            if (id.includes("firebase")) return "firebase-vendor";
-            return "vendor";
+            if (id.includes("react")) return "react-vendor"; // Split React
+            if (id.includes("firebase")) return "firebase-vendor"; // Split Firebase
+            if (id.includes("notistack")) return "notistack-vendor"; // Split Notistack
+            return "vendor"; // Other dependencies
           }
         },
       },
