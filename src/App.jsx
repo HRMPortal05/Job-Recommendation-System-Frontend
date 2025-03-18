@@ -3,6 +3,8 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./components/main/Navbar";
 import "./index.css";
 import { requestNotificationPermission } from "./components/fields_hooks/requestNotificationPermission";
+import NotificationInitializer from "./components/fields_hooks/NotificationInitializer";
+import NotificationButton from "./components/fields_hooks/NotificationButton";
 
 const App = () => {
   const navigate = useNavigate();
@@ -24,7 +26,9 @@ const App = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <NotificationInitializer />
       <Navbar />
+      <NotificationButton />
       <main className="flex-1">
         <Outlet />
       </main>

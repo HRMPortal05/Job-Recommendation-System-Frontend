@@ -1,6 +1,5 @@
-// firebase-messaging-sw.js - Place this at the root of your public directory
+// firebase-messaging-sw.js
 
-// Correctly import the Firebase scripts
 importScripts(
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
 );
@@ -8,7 +7,7 @@ importScripts(
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"
 );
 
-// This is important - Firebase config must be directly in the service worker for mobile PWAs
+// Firebase config for the service worker
 const firebaseConfig = {
   apiKey: "AIzaSyBUd1MtoUOupz-CIM858rPW4f_jsKhsC_I",
   authDomain: "job-message.firebaseapp.com",
@@ -19,9 +18,16 @@ const firebaseConfig = {
   measurementId: "G-PH28LCZX9X",
 };
 
-// Initialize Firebase immediately in the service worker
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
+
+// Create a notification ID generator to ensure unique IDs
+const generateUniqueId = () => {
+  return (
+    "notification-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9)
+  );
+};
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
@@ -30,14 +36,33 @@ messaging.onBackgroundMessage((payload) => {
     payload
   );
 
-  // Create notification options with all required fields for mobile
+  // Extract notification data from payload
+  const notificationTitle = payload.notification?.title || "New Notification";
+  const notificationBody = payload.notification?.body || "";
+  const notificationData = payload.data || {};
+
+  // Generate a unique tag for this notification
+  const notificationTag = generateUniqueId();
+
+  // Create notification options
   const notificationOptions = {
-    body: payload.notification.body || "",
-    icon: "/pwa-192x192.png", // Must be a local icon
-    badge: "/badge-icon.png", // Optional, for Android devices
-    vibrate: [100, 50, 100], // Vibration pattern for mobile devices
-    tag: "notification-" + Date.now(), // Ensures unique notifications
-    data: payload.data || {}, // Store any additional data
+    body: notificationBody,
+    icon: "/pwa-192x192.png",
+    badge: "/badge-icon.png", // For Android
+    vibrate: [100, 50, 100],
+    tag: notificationTag, // Unique tag for each notification
+    data: {
+      ...notificationData,
+      notificationId: notificationTag,
+      timestamp: Date.now(),
+    },
+    // Prevent notifications from being automatically grouped
+    renotify: true,
+    // Highest priority for mobile notifications
+    priority: "high",
+    // For Android, use default sound
+    silent: false,
+    // Add actions
     actions: [
       {
         action: "open",
@@ -46,40 +71,14 @@ messaging.onBackgroundMessage((payload) => {
     ],
   };
 
-  // Actually show the notification
+  // Display the notification
   return self.registration.showNotification(
-    payload.notification.title || "New Notification",
+    notificationTitle,
     notificationOptions
   );
 });
 
-// Handle notification click
-self.addEventListener("notificationclick", (event) => {
-  console.log("[firebase-messaging-sw.js] Notification clicked", event);
-  event.notification.close();
-
-  // Determine the URL to open (either from payload data or default)
-  const urlToOpen = event.notification.data.click_action || "/";
-
-  // Open or focus the client
-  event.waitUntil(
-    clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        // If we have a matching client, focus it
-        for (const client of clientList) {
-          if (client.url === urlToOpen && "focus" in client) {
-            return client.focus();
-          }
-        }
-
-        // Otherwise, open a new window
-        return clients.openWindow(urlToOpen);
-      })
-  );
-});
-
-// Handle push events directly - this is crucial for mobile PWAs
+// Handle push events directly (important for multiple notifications)
 self.addEventListener("push", (event) => {
   console.log("[firebase-messaging-sw.js] Push received", event);
 
@@ -106,19 +105,83 @@ self.addEventListener("push", (event) => {
     };
   }
 
+  // Generate unique ID for this notification
+  const notificationTag = generateUniqueId();
+
   const notificationOptions = {
-    body: notificationData.notification.body || "",
+    body: notificationData.notification?.body || "",
     icon: "/pwa-192x192.png",
     badge: "/badge-icon.png",
     vibrate: [100, 50, 100],
-    tag: "notification-" + Date.now(),
-    data: notificationData.data || {},
+    tag: notificationTag,
+    data: {
+      ...(notificationData.data || {}),
+      notificationId: notificationTag,
+      timestamp: Date.now(),
+    },
+    renotify: true,
+    priority: "high",
+    silent: false,
+    actions: [
+      {
+        action: "open",
+        title: "Open App",
+      },
+    ],
   };
 
   event.waitUntil(
     self.registration.showNotification(
-      notificationData.notification.title || "New Notification",
+      notificationData.notification?.title || "New Notification",
       notificationOptions
     )
   );
+});
+
+// Handle notification click
+self.addEventListener("notificationclick", (event) => {
+  console.log("[firebase-messaging-sw.js] Notification clicked", event);
+
+  // Close the notification
+  event.notification.close();
+
+  // Get the notification ID and data
+  const notificationId = event.notification.data?.notificationId;
+  const clickAction = event.notification.data?.click_action || "/";
+
+  // Handle specific actions if present
+  if (event.action === "open") {
+    console.log("Open action clicked");
+    // Handle open action (same as default click behavior)
+  }
+
+  // Focus or open window
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        // Try to find an existing client with the target URL
+        for (const client of clientList) {
+          // More flexible URL matching
+          if (
+            (client.url.includes(clickAction) ||
+              client.url.endsWith(clickAction)) &&
+            "focus" in client
+          ) {
+            console.log("Focusing existing client:", client.url);
+            return client.focus();
+          }
+        }
+
+        // If no matching client found, open a new window
+        console.log("Opening new window to:", clickAction);
+        return clients.openWindow(clickAction);
+      })
+  );
+});
+
+// Handle notification close
+self.addEventListener("notificationclose", (event) => {
+  console.log("[firebase-messaging-sw.js] Notification closed", event);
+  // Track notification close events if needed
 });
