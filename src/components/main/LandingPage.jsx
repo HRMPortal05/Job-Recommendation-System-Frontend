@@ -267,11 +267,7 @@ const LandingPage = () => {
   };
 
   useEffect(() => {
-    requestNotificationPermission().then((token) => {
-      if (token) {
-        alert("Your FCM Token: " + token);
-      }
-    });
+    requestNotificationPermission().then((token) => {});
   }, []);
 
   return (
