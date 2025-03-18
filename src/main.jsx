@@ -49,7 +49,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 if ("serviceWorker" in navigator) {
   console.log("Service worker is supported in this browser");
 } else {
-  alert("Service worker is NOT supported in this browser");
+  // alert("Service worker is NOT supported in this browser");
 }
 
 if ("serviceWorker" in navigator) {

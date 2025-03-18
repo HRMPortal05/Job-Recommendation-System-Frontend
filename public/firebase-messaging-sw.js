@@ -29,42 +29,167 @@ const generateUniqueId = () => {
   );
 };
 
-// Track notification IDs to prevent duplicates
-const processedNotifications = new Set();
+// Use IndexedDB to track notification history
+const dbName = "notificationDB";
+const storeName = "notificationHistory";
+let db;
+
+// Open/initialize IndexedDB
+const initDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName, 1);
+
+    request.onerror = (event) => {
+      console.error("IndexedDB error:", event.target.error);
+      resolve(false); // Continue even if DB fails
+    };
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(storeName)) {
+        const store = db.createObjectStore(storeName, { keyPath: "id" });
+        store.createIndex("timestamp", "timestamp", { unique: false });
+      }
+    };
+
+    request.onsuccess = (event) => {
+      db = event.target.result;
+
+      // Clean up old entries
+      cleanupOldEntries();
+
+      resolve(true);
+    };
+  });
+};
+
+// Initialize DB when service worker starts
+initDB();
+
+// Clean up notifications older than 10 seconds
+const cleanupOldEntries = () => {
+  if (!db) return;
+
+  const cutoffTime = Date.now() - 10000; // 10 seconds ago
+  const transaction = db.transaction([storeName], "readwrite");
+  const store = transaction.objectStore(storeName);
+  const index = store.index("timestamp");
+
+  const range = IDBKeyRange.upperBound(cutoffTime);
+  const request = index.openCursor(range);
+
+  request.onsuccess = (event) => {
+    const cursor = event.target.result;
+    if (cursor) {
+      store.delete(cursor.primaryKey);
+      cursor.continue();
+    }
+  };
+};
+
+// Check if notification is a duplicate
+const isDuplicate = (notificationHash) => {
+  return new Promise((resolve) => {
+    if (!db) {
+      resolve(false);
+      return;
+    }
+
+    const transaction = db.transaction([storeName], "readonly");
+    const store = transaction.objectStore(storeName);
+    const request = store.get(notificationHash);
+
+    request.onsuccess = (event) => {
+      resolve(!!event.target.result);
+    };
+
+    request.onerror = () => {
+      resolve(false); // If error, assume not duplicate
+    };
+  });
+};
+
+// Record notification to prevent duplicates
+const recordNotification = (notificationHash) => {
+  if (!db) return Promise.resolve();
+
+  const transaction = db.transaction([storeName], "readwrite");
+  const store = transaction.objectStore(storeName);
+
+  return new Promise((resolve) => {
+    const request = store.put({
+      id: notificationHash,
+      timestamp: Date.now(),
+    });
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => resolve(); // Continue even if recording fails
+  });
+};
 
 // Function to show notification with deduplication
-const showNotification = (title, options) => {
-  // Generate a hash based on title and body to identify duplicates
-  const notificationHash = `${title}:${options.body}:${Date.now()
-    .toString()
-    .slice(0, -3)}`;
+const showNotification = async (title, options) => {
+  // Generate a hash based on notification content
+  const notificationHash = `${title}:${options.body}`;
 
-  // Check if we've shown this notification recently
-  if (processedNotifications.has(notificationHash)) {
+  // Check if duplicate using IndexedDB
+  const duplicate = await isDuplicate(notificationHash);
+  if (duplicate) {
     console.log("Preventing duplicate notification:", notificationHash);
     return Promise.resolve();
   }
 
-  // Add to tracked notifications and remove after 3 seconds
-  processedNotifications.add(notificationHash);
-  setTimeout(() => {
-    processedNotifications.delete(notificationHash);
-  }, 3000);
+  // Record this notification
+  await recordNotification(notificationHash);
 
+  // Show the notification
   return self.registration.showNotification(title, options);
 };
 
-// Handle background messages
-messaging.onBackgroundMessage((payload) => {
+// Only use ONE event handler for notifications - disable onBackgroundMessage
+// and only use push event handler
+messaging.onBackgroundMessage(() => {
+  // Deliberately empty - we'll handle all notifications via push event
   console.log(
-    "[firebase-messaging-sw.js] Received background message ",
-    payload
+    "Background message received but ignored - using push handler instead"
   );
+});
 
-  // Extract notification data from payload
-  const notificationTitle = payload.notification?.title || "New Notification";
-  const notificationBody = payload.notification?.body || "";
-  const notificationData = payload.data || {};
+// Handle all push events
+self.addEventListener("push", (event) => {
+  let notificationData;
+
+  if (event.data) {
+    try {
+      notificationData = event.data.json();
+    } catch (e) {
+      console.error("Error parsing push event data:", e);
+      notificationData = {
+        notification: {
+          title: "New Notification",
+          body: "You have a new notification",
+        },
+      };
+    }
+  } else {
+    notificationData = {
+      notification: {
+        title: "New Notification",
+        body: "You have a new notification",
+      },
+    };
+  }
+
+  // Extract FCM data or use defaults
+  const notificationTitle =
+    notificationData.notification?.title ||
+    notificationData.data?.title ||
+    "New Notification";
+
+  const notificationBody =
+    notificationData.notification?.body || notificationData.data?.body || "";
+
+  const notificationData2 = notificationData.data || {};
 
   // Generate a unique tag for this notification
   const notificationTag = generateUniqueId();
@@ -73,75 +198,11 @@ messaging.onBackgroundMessage((payload) => {
   const notificationOptions = {
     body: notificationBody,
     icon: "/pwa-192x192.png",
-    badge: "/badge-icon.png", // For Android
-    vibrate: [100, 50, 100],
-    tag: notificationTag, // Unique tag for each notification
-    data: {
-      ...notificationData,
-      notificationId: notificationTag,
-      timestamp: Date.now(),
-    },
-    // Prevent notifications from being automatically grouped
-    renotify: true,
-    // Highest priority for mobile notifications
-    priority: "high",
-    // For Android, use default sound
-    silent: false,
-    // Add actions
-    actions: [
-      {
-        action: "open",
-        title: "Open App",
-      },
-    ],
-  };
-
-  // Display the notification with deduplication
-  return showNotification(notificationTitle, notificationOptions);
-});
-
-// IMPORTANT: We're not using the push event listener to avoid duplicates
-// Handle push events only if they don't come through Firebase Messaging
-self.addEventListener("push", (event) => {
-  // Get the data from the push event
-  let pushData;
-
-  if (event.data) {
-    try {
-      pushData = event.data.json();
-
-      // Skip processing if this appears to be a Firebase Cloud Messaging notification
-      // FCM notifications typically have this structure
-      if (pushData.notification && (pushData.from || pushData.firebase)) {
-        console.log("Skipping push event, likely handled by FCM already");
-        return;
-      }
-    } catch (e) {
-      console.error("Error parsing push event data:", e);
-    }
-  }
-
-  // Only process non-FCM push events
-  console.log("[firebase-messaging-sw.js] Processing non-FCM push", event);
-
-  const notificationData = pushData || {
-    notification: {
-      title: "New Notification",
-      body: "You have a new notification",
-    },
-  };
-
-  // Generate unique ID for this notification
-  const notificationTag = generateUniqueId();
-
-  const notificationOptions = {
-    body: notificationData.notification?.body || "",
-    icon: "/pwa-192x192.png",
     badge: "/badge-icon.png",
     vibrate: [100, 50, 100],
     tag: notificationTag,
     data: {
-      ...(notificationData.data || {}),
+      ...notificationData2,
       notificationId: notificationTag,
       timestamp: Date.now(),
     },
@@ -156,12 +217,8 @@ self.addEventListener("push", (event) => {
     ],
   };
 
-  event.waitUntil(
-    showNotification(
-      notificationData.notification?.title || "New Notification",
-      notificationOptions
-    )
-  );
+  // Use waitUntil to ensure the promise is resolved before the event completes
+  event.waitUntil(showNotification(notificationTitle, notificationOptions));
 });
 
 // Handle notification click
@@ -209,5 +266,4 @@ self.addEventListener("notificationclick", (event) => {
 // Handle notification close
 self.addEventListener("notificationclose", (event) => {
   console.log("[firebase-messaging-sw.js] Notification closed", event);
-  // Track notification close events if needed
 });
