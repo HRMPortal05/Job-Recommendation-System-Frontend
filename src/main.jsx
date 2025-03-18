@@ -46,14 +46,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>
 );
 
-// ✅ Register Firebase Messaging Service Worker
+if ("serviceWorker" in navigator) {
+  console.log("Service worker is supported in this browser");
+} else {
+  alert("Service worker is NOT supported in this browser");
+}
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .register("/firebase-messaging-sw.js")
     .then((registration) => {
       // Ensure service worker is active before sending the config
-      navigator.serviceWorker.ready.then(() => {
-        navigator.serviceWorker.controller?.postMessage({
+      return navigator.serviceWorker.ready;
+    })
+    .then((registration) => {
+      if (registration.active) {
+        registration.active.postMessage({
           type: "FIREBASE_CONFIG",
           firebaseConfig: {
             apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -66,7 +74,9 @@ if ("serviceWorker" in navigator) {
             measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
           },
         });
-      });
+      } else {
+        console.error("Service worker not active yet!");
+      }
     })
     .catch((error) =>
       console.error("Service Worker registration failed:", error)

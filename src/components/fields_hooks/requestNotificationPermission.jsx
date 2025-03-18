@@ -16,7 +16,13 @@ const messaging = getMessaging(app);
 
 export const requestNotificationPermission = async () => {
   try {
-    // Wait for service worker to be ready
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.error("Notification permission denied");
+      return null;
+    }
+
+    // Ensure service worker is registered
     const registration = await navigator.serviceWorker.ready;
 
     // Get FCM token
@@ -29,14 +35,10 @@ export const requestNotificationPermission = async () => {
       console.log("FCM Token:", token);
       return token;
     } else {
-      console.warn("No registration token available.");
+      console.warn("No FCM registration token available.");
+      return null;
     }
   } catch (error) {
-    console.error("Permission denied or failed:", error);
+    console.error("Failed to get FCM token:", error);
   }
 };
-
-// Listen for foreground messages
-onMessage(messaging, (payload) => {
-  console.log("Message received:", payload);
-});
