@@ -1,4 +1,6 @@
-// Firebase App (the core Firebase SDK) is always required and must be listed first
+// firebase-messaging-sw.js - Place this at the root of your public directory
+
+// Correctly import the Firebase scripts
 importScripts(
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
 );
@@ -6,126 +8,117 @@ importScripts(
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"
 );
 
-let firebaseInitialized = false;
+// This is important - Firebase config must be directly in the service worker for mobile PWAs
+const firebaseConfig = {
+  apiKey: "AIzaSyBUd1MtoUOupz-CIM858rPW4f_jsKhsC_I",
+  authDomain: "job-message.firebaseapp.com",
+  projectId: "job-message",
+  storageBucket: "job-message.firebasestorage.app",
+  messagingSenderId: "16389674311",
+  appId: "1:16389674311:web:ee7f4f0687f310715a6862",
+  measurementId: "G-PH28LCZX9X",
+};
 
-// Cache the Firebase config when received
-let cachedFirebaseConfig = null;
+// Initialize Firebase immediately in the service worker
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
 
-// Set up the event listener for the 'push' event
-self.addEventListener("push", (event) => {
-  console.log("Push event received", event);
+// Handle background messages
+messaging.onBackgroundMessage((payload) => {
+  console.log(
+    "[firebase-messaging-sw.js] Received background message ",
+    payload
+  );
 
-  let notificationData = {};
-
-  try {
-    notificationData = event.data.json();
-  } catch (e) {
-    console.error("Error parsing push event data:", e);
-    notificationData = {
-      notification: {
-        title: "New Notification",
-        body: "You have a new notification",
-        icon: "/pwa-192x192.png",
+  // Create notification options with all required fields for mobile
+  const notificationOptions = {
+    body: payload.notification.body || "",
+    icon: "/pwa-192x192.png", // Must be a local icon
+    badge: "/badge-icon.png", // Optional, for Android devices
+    vibrate: [100, 50, 100], // Vibration pattern for mobile devices
+    tag: "notification-" + Date.now(), // Ensures unique notifications
+    data: payload.data || {}, // Store any additional data
+    actions: [
+      {
+        action: "open",
+        title: "Open App",
       },
-    };
-  }
-
-  const options = {
-    body: notificationData.notification.body || "",
-    icon: notificationData.notification.icon || "/pwa-192x192.png",
-    badge: "/pwa-192x192.png",
-    vibrate: [100, 50, 100],
-    data: {
-      url: notificationData.data?.click_action || "/",
-    },
+    ],
   };
 
-  event.waitUntil(
-    self.registration.showNotification(
-      notificationData.notification.title || "New Notification",
-      options
-    )
+  // Actually show the notification
+  return self.registration.showNotification(
+    payload.notification.title || "New Notification",
+    notificationOptions
   );
 });
 
 // Handle notification click
 self.addEventListener("notificationclick", (event) => {
-  console.log("Notification clicked", event);
+  console.log("[firebase-messaging-sw.js] Notification clicked", event);
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || "/";
+  // Determine the URL to open (either from payload data or default)
+  const urlToOpen = event.notification.data.click_action || "/";
 
+  // Open or focus the client
   event.waitUntil(
-    clients.matchAll({ type: "window" }).then((windowClients) => {
-      // Check if there is already a window/tab open with the target URL
-      for (const client of windowClients) {
-        if (client.url === urlToOpen && "focus" in client) {
-          return client.focus();
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        // If we have a matching client, focus it
+        for (const client of clientList) {
+          if (client.url === urlToOpen && "focus" in client) {
+            return client.focus();
+          }
         }
-      }
-      // If no window/tab is open or URL doesn't match, open a new one
-      if (clients.openWindow) {
+
+        // Otherwise, open a new window
         return clients.openWindow(urlToOpen);
-      }
-    })
+      })
   );
 });
 
-// Listen for messages from the main app
-self.addEventListener("message", (event) => {
-  if (
-    event.data &&
-    event.data.type === "FIREBASE_CONFIG" &&
-    !firebaseInitialized
-  ) {
-    // Store config for potential future use
-    cachedFirebaseConfig = event.data.firebaseConfig;
+// Handle push events directly - this is crucial for mobile PWAs
+self.addEventListener("push", (event) => {
+  console.log("[firebase-messaging-sw.js] Push received", event);
 
+  let notificationData;
+
+  if (event.data) {
     try {
-      firebase.initializeApp(event.data.firebaseConfig);
-      const messaging = firebase.messaging();
-      firebaseInitialized = true;
-
-      messaging.onBackgroundMessage((payload) => {
-        console.log("Received background message", payload);
-
-        const options = {
-          body: payload.notification.body || "",
-          icon: payload.notification.icon || "/pwa-192x192.png",
-          badge: "/pwa-192x192.png",
-          vibrate: [100, 50, 100],
-          data: {
-            url: payload.data?.click_action || "/",
-          },
-        };
-
-        self.registration.showNotification(
-          payload.notification.title || "New Notification",
-          options
-        );
-      });
-
-      console.log("Firebase Messaging initialized in service worker");
-    } catch (error) {
-      console.error("Failed to initialize Firebase in service worker:", error);
+      notificationData = event.data.json();
+    } catch (e) {
+      console.error("Error parsing push event data:", e);
+      notificationData = {
+        notification: {
+          title: "New Notification",
+          body: "You have a new notification",
+        },
+      };
     }
+  } else {
+    notificationData = {
+      notification: {
+        title: "New Notification",
+        body: "You have a new notification",
+      },
+    };
   }
-});
 
-// If the service worker starts without receiving the config (like on a refresh),
-// try to use the cached config if available
-self.addEventListener("activate", (event) => {
-  console.log("Service worker activated");
+  const notificationOptions = {
+    body: notificationData.notification.body || "",
+    icon: "/pwa-192x192.png",
+    badge: "/badge-icon.png",
+    vibrate: [100, 50, 100],
+    tag: "notification-" + Date.now(),
+    data: notificationData.data || {},
+  };
 
-  if (cachedFirebaseConfig && !firebaseInitialized) {
-    try {
-      firebase.initializeApp(cachedFirebaseConfig);
-      const messaging = firebase.messaging();
-      firebaseInitialized = true;
-
-      console.log("Firebase Messaging initialized from cached config");
-    } catch (error) {
-      console.error("Failed to initialize Firebase from cached config:", error);
-    }
-  }
+  event.waitUntil(
+    self.registration.showNotification(
+      notificationData.notification.title || "New Notification",
+      notificationOptions
+    )
+  );
 });

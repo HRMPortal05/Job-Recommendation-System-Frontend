@@ -16,157 +16,138 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase only if messaging is supported
-let messaging = null;
-let app = null;
+// Initialize Firebase app
+const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase and messaging conditionally
-const initializeFirebaseMessaging = async () => {
-  try {
-    // First check if Firebase Messaging is supported in this browser
-    if (await isSupported()) {
-      app = initializeApp(firebaseConfig);
-      messaging = getMessaging(app);
-      return true;
-    } else {
-      console.log("Firebase messaging is not supported in this browser/device");
-      return false;
-    }
-  } catch (error) {
-    console.error("Error initializing Firebase:", error);
-    return false;
-  }
-};
-
+// Function to request notification permission
 export const requestNotificationPermission = async () => {
-  // First make sure messaging is initialized
-  const isMessagingSupported = await initializeFirebaseMessaging();
-  if (!isMessagingSupported) {
-    alert("Notification features unavailable on this browser/device");
-    return null;
-  }
-
   try {
-    // First check if notification permission is already granted
-    if (Notification.permission !== "granted") {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        console.warn("Notification permission denied");
-        return null;
-      }
+    // Check if notifications and service workers are supported
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+      alert("Notifications or Service Workers not supported");
+      return null;
     }
 
-    // Wait for service worker to be ready
-    const serviceWorkerRegistration = await navigator.serviceWorker.ready;
-    console.log("Service worker is ready");
-
-    // Send Firebase config to the service worker
-    if (serviceWorkerRegistration.active) {
-      serviceWorkerRegistration.active.postMessage({
-        type: "FIREBASE_CONFIG",
-        firebaseConfig: firebaseConfig,
-      });
+    // Request permission explicitly
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.warn("Notification permission not granted");
+      return null;
     }
 
-    // Get FCM token
+    // Register service worker if not already registered
+    const swRegistration = await registerServiceWorker();
+    if (!swRegistration) {
+      console.error("Service worker registration failed");
+      return null;
+    }
+
+    // Check if messaging is supported
+    const messagingSupported = await isSupported();
+    if (!messagingSupported) {
+      console.warn("Firebase messaging not supported on this device");
+      return null;
+    }
+
+    // Initialize messaging
+    const messaging = getMessaging(app);
+
+    // Get FCM token with explicit service worker registration
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_VAPIDKEY,
-      serviceWorkerRegistration: serviceWorkerRegistration,
+      serviceWorkerRegistration: swRegistration,
     });
 
     if (token) {
-      console.log("FCM Token:", token);
-      // Store token in local storage for persistence
+      console.log("FCM Token acquired:", token);
+      // Store token in indexedDB or localStorage for persistence
       localStorage.setItem("fcmToken", token);
       return token;
     } else {
-      console.warn("No registration token available.");
+      console.warn("Failed to get FCM token");
       return null;
     }
   } catch (error) {
-    console.error("FCM token acquisition failed:", error);
+    console.error("Error setting up notifications:", error);
     return null;
   }
 };
 
-// Handle foreground notifications
-export const setupForegroundNotifications = () => {
-  if (!messaging) return;
+// Function to register service worker
+const registerServiceWorker = async () => {
+  try {
+    if ("serviceWorker" in navigator) {
+      const registration = await navigator.serviceWorker.register(
+        "/firebase-messaging-sw.js",
+        {
+          scope: "/",
+        }
+      );
 
-  onMessage(messaging, (payload) => {
-    console.log("Foreground message received:", payload);
+      console.log("Service Worker registered with scope:", registration.scope);
+      return registration;
+    }
+    return null;
+  } catch (error) {
+    console.error("Service Worker registration failed:", error);
+    return null;
+  }
+};
 
-    // Display foreground notification manually since Firebase doesn't show them automatically
-    if (payload.notification) {
-      const { title, body } = payload.notification;
+// Setup foreground message handling
+export const setupForegroundMessages = () => {
+  try {
+    const messaging = getMessaging(app);
 
-      // Only show notification if we have permission and the app is visible
-      if (
-        Notification.permission === "granted" &&
-        document.visibilityState !== "visible"
-      ) {
-        const notification = new Notification(title || "New Notification", {
-          body: body || "",
-          icon: "/pwa-192x192.png",
-          data: payload.data,
-        });
+    onMessage(messaging, (payload) => {
+      console.log("Message received in foreground:", payload);
 
-        notification.onclick = (event) => {
-          event.preventDefault();
-          window.focus();
+      // Custom foreground notification for PWA/mobile
+      if (payload.notification && Notification.permission === "granted") {
+        // If app is in foreground on mobile, we need to show notification manually
+        const notification = new Notification(
+          payload.notification.title || "New Message",
+          {
+            body: payload.notification.body || "",
+            icon: "/pwa-192x192.png",
+            data: payload.data || {},
+          }
+        );
+
+        notification.onclick = () => {
           notification.close();
+          window.focus();
 
-          // Handle any click actions
-          const clickAction = payload.data?.click_action;
-          if (clickAction && window.location.pathname !== clickAction) {
-            window.location.href = clickAction;
+          // Handle any navigation based on data
+          if (payload.data?.click_action) {
+            window.location.href = payload.data.click_action;
           }
         };
       }
-
-      // If app is visible, you might want to show an in-app notification instead
-      // e.g., using your SnackbarProvider or a custom notification component
-    }
-  });
-};
-
-// Function to check token validity and refresh if needed
-export const ensureValidFCMToken = async () => {
-  if (!messaging) await initializeFirebaseMessaging();
-  if (!messaging) return null;
-
-  try {
-    const currentToken = localStorage.getItem("fcmToken");
-
-    // If we don't have a token, request a new one
-    if (!currentToken) {
-      return await requestNotificationPermission();
-    }
-
-    // Validate existing token or get a new one if needed
-    const serviceWorkerRegistration = await navigator.serviceWorker.ready;
-    const newToken = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_VAPIDKEY,
-      serviceWorkerRegistration: serviceWorkerRegistration,
     });
 
-    if (newToken !== currentToken) {
-      localStorage.setItem("fcmToken", newToken);
-      console.log("FCM token updated:", newToken);
-    }
-
-    return newToken;
+    console.log("Foreground message handler set up");
   } catch (error) {
-    console.error("Error ensuring valid FCM token:", error);
-    return null;
+    console.error("Error setting up foreground messages:", error);
   }
 };
 
-// Initialize listeners for foreground messages
-if (typeof window !== "undefined") {
-  initializeFirebaseMessaging().then((isSupported) => {
-    if (isSupported) {
-      setupForegroundNotifications();
-    }
-  });
-}
+// Initialize everything
+export const initializeNotifications = async () => {
+  // Get notification permission and token
+  const token = await requestNotificationPermission();
+
+  // Setup foreground message handling
+  if (token) {
+    setupForegroundMessages();
+    return token;
+  }
+
+  return null;
+};
+
+// Initialize with a user action (button click) for mobile browsers
+export const setupNotificationsOnUserAction = () => {
+  // This should be called from a user interaction like a button click
+  return initializeNotifications();
+};
