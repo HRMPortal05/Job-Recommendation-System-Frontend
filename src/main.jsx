@@ -1,41 +1,108 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
+
 import App from "./App.jsx";
-import LandingPage from "./components/main/LandingPage.jsx";
-import JobList from "./components/jobs/JobList.jsx";
-import ChangePassword from "./components/auth/ChangePassword.jsx";
-import ForgotPasswordEmail from "./components/auth/ForgotPasswordEmail.jsx";
-import ResetPassword from "./components/auth/ResetPassword.jsx";
-import UserProfile from "./components/userprofile/UserProfile.jsx";
-import AddJobForm from "./components/jobs/AddJobForm.jsx";
-import CompleteProfilePage from "./components/userprofile/CompleteProfilePage.jsx";
-import RemoteJobList from "./components/jobs/RemoteJobList.jsx";
+
+const LandingPage = lazy(() => import("./components/main/LandingPage.jsx"));
+const JobList = lazy(() => import("./components/jobs/JobList.jsx"));
+const ChangePassword = lazy(() =>
+  import("./components/auth/ChangePassword.jsx")
+);
+const ForgotPasswordEmail = lazy(() =>
+  import("./components/auth/ForgotPasswordEmail.jsx")
+);
+const ResetPassword = lazy(() => import("./components/auth/ResetPassword.jsx"));
+const UserProfile = lazy(() =>
+  import("./components/userprofile/UserProfile.jsx")
+);
+const AddJobForm = lazy(() => import("./components/jobs/AddJobForm.jsx"));
+const CompleteProfilePage = lazy(() =>
+  import("./components/userprofile/CompleteProfilePage.jsx")
+);
+const RemoteJobList = lazy(() => import("./components/jobs/RemoteJobList.jsx"));
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <LandingPage /> },
-      { path: "joblist", element: <JobList /> },
-      { path: "change-password", element: <ChangePassword /> },
-      { path: "forgot-password", element: <ForgotPasswordEmail /> },
       {
-        path: `reset-password/:user_id/:temp_token`,
-        element: <ResetPassword />,
+        index: true,
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <LandingPage />
+          </Suspense>
+        ),
       },
-      { path: "userprofile", element: <UserProfile /> },
-      { path: "completeprofile", element: <CompleteProfilePage /> },
-      { path: "postjob", element: <AddJobForm /> },
-      { path: "remote-jobs", element: <RemoteJobList /> },
+      {
+        path: "joblist",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <JobList />
+          </Suspense>
+        ),
+      },
+      {
+        path: "change-password",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <ChangePassword />
+          </Suspense>
+        ),
+      },
+      {
+        path: "forgot-password",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <ForgotPasswordEmail />
+          </Suspense>
+        ),
+      },
+      {
+        path: "reset-password/:user_id/:temp_token",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <ResetPassword />
+          </Suspense>
+        ),
+      },
+      {
+        path: "userprofile",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <UserProfile />
+          </Suspense>
+        ),
+      },
+      {
+        path: "completeprofile",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <CompleteProfilePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "postjob",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <AddJobForm />
+          </Suspense>
+        ),
+      },
+      {
+        path: "remote-jobs",
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <RemoteJobList />
+          </Suspense>
+        ),
+      },
     ],
   },
-  {
-    path: "*",
-    element: <></>,
-  },
+  { path: "*", element: <></> },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(

@@ -23,12 +23,16 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 2000, // Increase limit (if needed)
     rollupOptions: {
       output: {
-        assetFileNames: "assets/[name].[hash].[ext]",
-        chunkFileNames: "assets/[name].[hash].js",
-        entryFileNames: "assets/[name].[hash].js",
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react")) return "react-vendor";
+            if (id.includes("firebase")) return "firebase-vendor";
+            return "vendor";
+          }
+        },
       },
     },
   },
