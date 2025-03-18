@@ -463,7 +463,7 @@ const LandingPage = () => {
                   </button>
                 </div>
               ) : (
-                <p>Fetching token...1</p>
+                <p>Fetching token...2</p>
               )}
             </div>
 

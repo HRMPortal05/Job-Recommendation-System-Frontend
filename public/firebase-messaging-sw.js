@@ -29,6 +29,31 @@ const generateUniqueId = () => {
   );
 };
 
+// Track notification IDs to prevent duplicates
+const processedNotifications = new Set();
+
+// Function to show notification with deduplication
+const showNotification = (title, options) => {
+  // Generate a hash based on title and body to identify duplicates
+  const notificationHash = `${title}:${options.body}:${Date.now()
+    .toString()
+    .slice(0, -3)}`;
+
+  // Check if we've shown this notification recently
+  if (processedNotifications.has(notificationHash)) {
+    console.log("Preventing duplicate notification:", notificationHash);
+    return Promise.resolve();
+  }
+
+  // Add to tracked notifications and remove after 3 seconds
+  processedNotifications.add(notificationHash);
+  setTimeout(() => {
+    processedNotifications.delete(notificationHash);
+  }, 3000);
+
+  return self.registration.showNotification(title, options);
+};
+
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log(
@@ -71,39 +96,40 @@ messaging.onBackgroundMessage((payload) => {
     ],
   };
 
-  // Display the notification
-  return self.registration.showNotification(
-    notificationTitle,
-    notificationOptions
-  );
+  // Display the notification with deduplication
+  return showNotification(notificationTitle, notificationOptions);
 });
 
-// Handle push events directly (important for multiple notifications)
+// IMPORTANT: We're not using the push event listener to avoid duplicates
+// Handle push events only if they don't come through Firebase Messaging
 self.addEventListener("push", (event) => {
-  console.log("[firebase-messaging-sw.js] Push received", event);
-
-  let notificationData;
+  // Get the data from the push event
+  let pushData;
 
   if (event.data) {
     try {
-      notificationData = event.data.json();
+      pushData = event.data.json();
+
+      // Skip processing if this appears to be a Firebase Cloud Messaging notification
+      // FCM notifications typically have this structure
+      if (pushData.notification && (pushData.from || pushData.firebase)) {
+        console.log("Skipping push event, likely handled by FCM already");
+        return;
+      }
     } catch (e) {
       console.error("Error parsing push event data:", e);
-      notificationData = {
-        notification: {
-          title: "New Notification",
-          body: "You have a new notification",
-        },
-      };
     }
-  } else {
-    notificationData = {
-      notification: {
-        title: "New Notification",
-        body: "You have a new notification",
-      },
-    };
   }
+
+  // Only process non-FCM push events
+  console.log("[firebase-messaging-sw.js] Processing non-FCM push", event);
+
+  const notificationData = pushData || {
+    notification: {
+      title: "New Notification",
+      body: "You have a new notification",
+    },
+  };
 
   // Generate unique ID for this notification
   const notificationTag = generateUniqueId();
@@ -131,7 +157,7 @@ self.addEventListener("push", (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(
+    showNotification(
       notificationData.notification?.title || "New Notification",
       notificationOptions
     )
