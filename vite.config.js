@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  base: "/",
   plugins: [
     react(),
     VitePWA({
@@ -10,6 +11,9 @@ export default defineConfig({
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
       workbox: {
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],
@@ -19,6 +23,7 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
         assetFileNames: "assets/[name].[hash].[ext]",

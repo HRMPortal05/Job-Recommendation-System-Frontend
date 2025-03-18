@@ -48,26 +48,43 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 // ✅ Register Firebase Messaging Service Worker
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .register("/firebase-messaging-sw.js")
-    .then((registration) => {
-      console.log("Service Worker registered with scope:", registration.scope);
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/firebase-messaging-sw.js")
+      .then(async (registration) => {
+        console.log(
+          "Service Worker registered with scope:",
+          registration.scope
+        );
 
-      // Send Firebase config to the service worker
-      registration.active?.postMessage({
-        type: "FIREBASE_CONFIG",
-        firebaseConfig: {
-          apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-          authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-          projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-          storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-          messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-          appId: import.meta.env.VITE_FIREBASE_APP_ID,
-          measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-        },
-      });
-    })
-    .catch((error) =>
-      console.error("Service Worker registration failed:", error)
-    );
+        // Wait for the service worker to become active
+        if (registration.waiting) {
+          registration.waiting.postMessage({
+            type: "FIREBASE_CONFIG",
+            firebaseConfig: getFirebaseConfig(),
+          });
+        } else if (registration.active) {
+          registration.active.postMessage({
+            type: "FIREBASE_CONFIG",
+            firebaseConfig: getFirebaseConfig(),
+          });
+        } else {
+          console.log("Service worker is installing or not yet active.");
+        }
+      })
+      .catch((error) =>
+        console.error("Service Worker registration failed:", error)
+      );
+  });
 }
+
+// ✅ Function to get Firebase config securely
+const getFirebaseConfig = () => ({
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+});
