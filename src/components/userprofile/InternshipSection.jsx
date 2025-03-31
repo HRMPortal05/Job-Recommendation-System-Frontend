@@ -8,7 +8,7 @@ const InternshipSection = ({ internships, onEdit, onAdd }) => {
           Internships
         </h2>
         <button
-          className="text-primary-DEFAULT dark:text-primary-dark hover:text-primary-hover dark:hover:text-primary-dark_hover"
+          className="text-primary-500 dark:text-primary-dark hover:text-primary-hover dark:hover:text-primary-dark_hover"
           onClick={onAdd}
         >
           Add

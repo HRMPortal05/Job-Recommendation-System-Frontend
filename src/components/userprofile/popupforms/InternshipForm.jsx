@@ -9,18 +9,18 @@ const InternshipForm = ({
 }) => {
   // Reusable months array for dropdown options
   const months = [
-    { value: "Jan", label: "January" },
-    { value: "Feb", label: "February" },
-    { value: "Mar", label: "March" },
-    { value: "Apr", label: "April" },
-    { value: "May", label: "May" },
-    { value: "Jun", label: "June" },
-    { value: "Jul", label: "July" },
-    { value: "Aug", label: "August" },
-    { value: "Sep", label: "September" },
-    { value: "Oct", label: "October" },
-    { value: "Nov", label: "November" },
-    { value: "Dec", label: "December" },
+    { value: "Jan", label: "January", monthNumber: "01" },
+    { value: "Feb", label: "February", monthNumber: "02" },
+    { value: "Mar", label: "March", monthNumber: "03" },
+    { value: "Apr", label: "April", monthNumber: "04" },
+    { value: "May", label: "May", monthNumber: "05" },
+    { value: "Jun", label: "June", monthNumber: "06" },
+    { value: "Jul", label: "July", monthNumber: "07" },
+    { value: "Aug", label: "August", monthNumber: "08" },
+    { value: "Sep", label: "September", monthNumber: "09" },
+    { value: "Oct", label: "October", monthNumber: "10" },
+    { value: "Nov", label: "November", monthNumber: "11" },
+    { value: "Dec", label: "December", monthNumber: "12" },
   ];
 
   const [internship, setInternship] = useState({
@@ -45,22 +45,31 @@ const InternshipForm = ({
     description: false,
   });
 
+  // Function to parse YYYY-MM-DD date format from backend
+  const parseBackendDate = (dateString) => {
+    if (!dateString) return { month: "", year: "" };
+
+    try {
+      // Parse the date in format YYYY-MM-DD
+      const [year, monthNum] = dateString.split("-");
+
+      // Find the corresponding month value from the month number
+      const monthObj = months.find((m) => m.monthNumber === monthNum);
+      const month = monthObj ? monthObj.value : "";
+
+      return { month, year };
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      return { month: "", year: "" };
+    }
+  };
+
   // Populate form when editing an existing internship
   useEffect(() => {
     if (initialInternships) {
-      // Parse the date strings if they exist
-      const parseDuration = (durationString) => {
-        if (!durationString) return { month: "", year: "" };
-
-        const parts = durationString.trim().split(" ");
-        if (parts.length >= 2) {
-          return { month: parts[0], year: parts[1] };
-        }
-        return { month: "", year: "" };
-      };
-
-      const fromDuration = parseDuration(initialInternships.durationFrom);
-      const toDuration = parseDuration(initialInternships.durationTo);
+      // Parse the date strings from backend format (YYYY-MM-DD)
+      const fromDuration = parseBackendDate(initialInternships.durationFrom);
+      const toDuration = parseBackendDate(initialInternships.durationTo);
 
       const updatedInternship = {
         companyName: initialInternships.companyName || "",
@@ -124,16 +133,31 @@ const InternshipForm = ({
       return;
     }
 
+    // Format dates in YYYY-MM-DD format with day always set to '01'
+    const formatDateForAPI = (month, year) => {
+      if (!month || !year) return "";
+
+      // Find the month number from the months array
+      const monthObj = months.find((m) => m.value === month);
+      const monthNumber = monthObj ? monthObj.monthNumber : "01"; // Default to "01" if not found
+
+      return `${year}-${monthNumber}-01`;
+    };
+
     // Format the data to match your required structure
     const formattedData = {
       ...(initialInternships?.internship_id
         ? { internship_id: initialInternships.internship_id }
         : {}),
       companyName: internship.companyName,
-      durationFrom:
-        `${internship.durationFrom} ${internship.durationFromYear}`.trim(),
-      durationTo:
-        `${internship.durationTo} ${internship.durationToYear}`.trim(),
+      durationFrom: formatDateForAPI(
+        internship.durationFrom,
+        internship.durationFromYear
+      ),
+      durationTo: formatDateForAPI(
+        internship.durationTo,
+        internship.durationToYear
+      ),
       description: internship.description,
     };
 
@@ -181,13 +205,15 @@ const InternshipForm = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="w-full max-w-2xl p-10 bg-white rounded-lg shadow-sm">
+      <div className="w-full max-w-2xl p-8 bg-white rounded-lg shadow-sm overflow-y-auto max-h-screen">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-text-primary">
+            <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
               {editIndex !== null ? "Edit Internship" : "Add Internship"}
             </h2>
-            <p className="text-gray-600">Show your professional learnings</p>
+            <p className="text-sm sm:text-base text-gray-600">
+              Show your professional learnings
+            </p>
           </div>
           <div className="flex items-center gap-3">
             {editIndex !== null && (
@@ -195,6 +221,7 @@ const InternshipForm = ({
                 className="text-red-500 hover:text-red-700"
                 onClick={handleDelete}
                 type="button"
+                aria-label="Delete internship"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -213,7 +240,11 @@ const InternshipForm = ({
                 </svg>
               </button>
             )}
-            <button className="text-text-tertiary" onClick={handleCancel}>
+            <button
+              className="text-text-tertiary"
+              onClick={handleCancel}
+              aria-label="Close form"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -253,84 +284,102 @@ const InternshipForm = ({
               />
             </div>
 
-            {/* Internship Duration */}
+            {/* Internship Duration - Responsive Layout */}
             <div>
               <label className="block text-text-primary font-medium mb-2">
                 Internship duration <span className="text-red-500">*</span>
               </label>
-              <div className="flex items-center gap-4">
-                <div className="relative w-1/4">
-                  <select
-                    id="durationFrom"
-                    name="durationFrom"
-                    value={internship.durationFrom}
-                    onChange={handleChange}
-                    className={getInputClass("durationFrom")}
-                  >
-                    <option value="">Month</option>
-                    {months.map((month) => (
-                      <option key={month.value} value={month.value}>
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                <div className="relative w-1/4">
-                  <select
-                    id="durationFromYear"
-                    name="durationFromYear"
-                    value={internship.durationFromYear}
-                    onChange={handleChange}
-                    className={getInputClass("durationFromYear")}
-                  >
-                    <option value="">Year</option>
-                    {Array.from({ length: 10 }, (_, i) => 2025 - i).map(
-                      (year) => (
-                        <option key={year} value={year}>
-                          {year}
+              {/* From date - stacked on mobile, side by side on larger screens */}
+              <div className="mb-3 sm:mb-4">
+                <div className="text-sm text-gray-500 mb-2 sm:hidden">
+                  From:
+                </div>
+                <div className="flex flex-wrap gap-2 sm:gap-4">
+                  <div className="w-full sm:w-auto flex-1">
+                    <select
+                      id="durationFrom"
+                      name="durationFrom"
+                      value={internship.durationFrom}
+                      onChange={handleChange}
+                      className={getInputClass("durationFrom")}
+                      aria-label="From month"
+                    >
+                      <option value="">Month</option>
+                      {months.map((month) => (
+                        <option key={month.value} value={month.value}>
+                          {month.label}
                         </option>
-                      )
-                    )}
-                  </select>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-full sm:w-auto flex-1">
+                    <select
+                      id="durationFromYear"
+                      name="durationFromYear"
+                      value={internship.durationFromYear}
+                      onChange={handleChange}
+                      className={getInputClass("durationFromYear")}
+                      aria-label="From year"
+                    >
+                      <option value="">Year</option>
+                      {Array.from({ length: 10 }, (_, i) => 2025 - i).map(
+                        (year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
                 </div>
+              </div>
 
-                <span className="text-text-secondary">to</span>
-
-                <div className="relative w-1/4">
-                  <select
-                    id="durationTo"
-                    name="durationTo"
-                    value={internship.durationTo}
-                    onChange={handleChange}
-                    className={getInputClass("durationTo")}
-                  >
-                    <option value="">Month</option>
-                    {months.map((month) => (
-                      <option key={month.value} value={month.value}>
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
+              {/* To date - stacked on mobile, side by side on larger screens */}
+              <div>
+                <div className="text-sm text-gray-500 mb-2 sm:hidden">To:</div>
+                <div className="hidden sm:block text-center text-text-secondary font-medium mb-2">
+                  to
                 </div>
-
-                <div className="relative w-1/4">
-                  <select
-                    id="durationToYear"
-                    name="durationToYear"
-                    value={internship.durationToYear}
-                    onChange={handleChange}
-                    className={getInputClass("durationToYear")}
-                  >
-                    <option value="">Year</option>
-                    {Array.from({ length: 10 }, (_, i) => 2025 - i).map(
-                      (year) => (
-                        <option key={year} value={year}>
-                          {year}
+                <div className="flex flex-wrap gap-2 sm:gap-4">
+                  <div className="w-full sm:w-auto flex-1">
+                    <select
+                      id="durationTo"
+                      name="durationTo"
+                      value={internship.durationTo}
+                      onChange={handleChange}
+                      className={getInputClass("durationTo")}
+                      aria-label="To month"
+                    >
+                      <option value="">Month</option>
+                      {months.map((month) => (
+                        <option key={month.value} value={month.value}>
+                          {month.label}
                         </option>
-                      )
-                    )}
-                  </select>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-full sm:w-auto flex-1">
+                    <select
+                      id="durationToYear"
+                      name="durationToYear"
+                      value={internship.durationToYear}
+                      onChange={handleChange}
+                      className={getInputClass("durationToYear")}
+                      aria-label="To year"
+                    >
+                      <option value="">Year</option>
+                      {Array.from({ length: 10 }, (_, i) => 2025 - i).map(
+                        (year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -372,13 +421,13 @@ const InternshipForm = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-5 py-2 text-blue-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 text-blue-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
               {editIndex !== null ? "Update" : "Save"}
             </button>

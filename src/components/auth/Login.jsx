@@ -89,8 +89,6 @@ const Login = ({ onLoginClose, onSignUpClick }) => {
         }
       );
 
-      console.log(response.data);
-
       if (response.data?.token) {
         enqueueSnackbar("Logged in successfully", {
           variant: "success",

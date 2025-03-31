@@ -13,12 +13,24 @@ const ProfileSidebar = ({ userData, profileCompletion }) => {
     { name: "Resume", id: "resume-section" },
   ];
 
-  // Function to handle smooth scrolling to sections
+  // Function to handle smooth scrolling to sections with 20px padding from top
   const handleLinkClick = (e, id) => {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Get the element's position relative to the viewport
+      const elementPosition = element.getBoundingClientRect().top;
+      // Get the current scroll position
+      const scrollPosition =
+        window.pageYOffset || document.documentElement.scrollTop;
+      // Calculate the target position (current position + element position - 20px padding)
+      const targetPosition = scrollPosition + elementPosition - 70;
+
+      // Scroll to the target position smoothly
+      window.scrollTo({
+        top: targetPosition,
+        behavior: "smooth",
+      });
     }
   };
 

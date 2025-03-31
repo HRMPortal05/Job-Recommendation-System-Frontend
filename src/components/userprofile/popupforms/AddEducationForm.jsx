@@ -183,6 +183,8 @@ const AddEducationForm = ({
 
     if (isValid) {
       // Call the parent component's onSave with the form data and edit index if provided
+      formData.graduate.courseDurationTo = `${formData.graduate.courseDurationTo}-01-01`;
+      formData.graduate.courseDurationFrom = `${formData.graduate.courseDurationFrom}-01-01`;
       onSave(formData, editIndex);
     }
   };

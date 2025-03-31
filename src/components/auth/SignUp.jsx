@@ -137,11 +137,9 @@ const SignUp = ({ onClose, onLoginClick }) => {
         }
       );
 
-      console.log("Registration response:", response);
       onClose();
       onLoginClick();
     } catch (error) {
-      console.log("Registration error:", error);
       if (error.response && error.response.status === 409) {
         const errorData = error.response.data;
         setErrors({
@@ -200,7 +198,6 @@ const SignUp = ({ onClose, onLoginClick }) => {
       }
 
       const data = await response.json();
-      console.log("Upload response:", data.secure_url);
       setFormData((prev) => ({
         ...prev,
         resumeUrl: data.secure_url,
@@ -251,8 +248,18 @@ const SignUp = ({ onClose, onLoginClick }) => {
   };
 
   const handleGoogleLogin = () => {
-    console.log("Logging in with Google");
-    // Handle Google login logic
+    const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
+      scope: "openid email profile",
+      access_type: "online",
+    });
+
+    // Redirect to Google OAuth login page
+    window.location.href = `${googleAuthUrl}?${params.toString()}`;
   };
 
   const handleLinkedInLogin = () => {

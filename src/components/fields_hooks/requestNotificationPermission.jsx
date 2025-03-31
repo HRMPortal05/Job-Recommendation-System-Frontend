@@ -59,7 +59,7 @@ export const requestNotificationPermission = async () => {
     });
 
     if (token) {
-      console.log("FCM Token acquired:", token);
+      // console.log("FCM Token acquired:", token);
       // Store token in indexedDB or localStorage for persistence
       localStorage.setItem("fcmToken", token);
       return token;
@@ -125,8 +125,6 @@ export const setupForegroundMessages = () => {
         };
       }
     });
-
-    console.log("Foreground message handler set up");
   } catch (error) {
     console.error("Error setting up foreground messages:", error);
   }

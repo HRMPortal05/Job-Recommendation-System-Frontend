@@ -14,6 +14,13 @@ import InternshipSection from "./InternshipSection";
 import InternshipForm from "./popupforms/InternshipForm";
 import ProfileSidebar from "./ProfileSidebar";
 import { Loader } from "lucide-react";
+import ProjectsSection from "./ProjectsSection";
+import AddProjectsForm from "./popupforms/AddProjectsForm";
+import ProfileCompletionCard from "./ProfileCompletionCard";
+import LanguagesSection from "./LanguagesSection";
+import ResumeSection from "./ResumeSection";
+import ResumeUploadForm from "./popupforms/ResumeUploadForm";
+import LanguageForm from "./popupforms/LanguageForm";
 
 const CompleteProfilePage = () => {
   // Define profile sections with their weights for percentage calculation
@@ -26,16 +33,17 @@ const CompleteProfilePage = () => {
     keySkills: { weight: 15, fields: ["keySkills"] },
     internships: { weight: 15, isArray: true },
     projects: { weight: 15, isArray: true },
+    resume: { weight: 5, fields: ["resumeUrl"] },
     education: {
-      weight: 30,
+      weight: 25, // Reduced from 30 to make room for resume
       nestedFields: {
         degrees: { isArray: true, weight: 15 },
         class12: {
-          weight: 7.5,
+          weight: 5, // Reduced from 7.5
           fields: ["board", "percentage", "passingYear"],
         },
         class10: {
-          weight: 7.5,
+          weight: 5, // Reduced from 7.5
           fields: ["board", "percentage", "passingYear"],
         },
       },
@@ -52,24 +60,17 @@ const CompleteProfilePage = () => {
     profileSummary: "",
     keySkills: "",
     language: "",
+    resumeUrl: "",
     users: {
       user_id: "",
       username: "",
       email: "",
       phone: "",
       address: "",
-      resumeUrl:
-        "https://res.cloudinary.com/duzoeq3dw/image/upload/v1740208672/Odoo_x_Charusat_Hackathon_2025.pdf",
+      resumeUrl: "",
     },
     internships: [],
-    projects: [
-      {
-        projects_id: "",
-        projectName: "",
-        projectDescription: "",
-        projectDuration: "",
-      },
-    ],
+    projects: [],
     education: {
       education_id: "",
       degrees: [],
@@ -90,10 +91,56 @@ const CompleteProfilePage = () => {
     },
   });
 
-  // Calculate profile completion percentage
+  const [showEducationForm, setShowEducationForm] = useState(false);
+  const [showCareerPopup, setShowCareerPopup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showEducationPopup, setShowEducationPopup] = useState(false);
+  const [showKeySkillsForm, setShowKeySkillsForm] = useState(false);
+  const [showProfileSummaryForm, setShowProfileSummaryForm] = useState(false);
+  const [showInternshipsForm, setShowInternshipsForm] = useState(false);
+  const [showProjectsForm, setShowProjectsForm] = useState(false);
+  const [showLanguagesForm, setShowLanguagesForm] = useState(false);
+  const [showResumeUploadForm, setShowResumeUploadForm] = useState(false);
+
+  const [educationType, setEducationType] = useState(null);
+  const [currentEditIndex, setCurrentEditIndex] = useState(null);
+
+  const token = localStorage.getItem("token");
+  const uid = jwtDecode(token).user_id;
+
+  const fetchMainData = async () => {
+    setIsLoading(true);
+
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/career-preferences/getByUserId/${uid}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      calculateProfileCompletion(response.data);
+      setMainData(response.data);
+    } catch (error) {
+      console.error("Error fetching main data:", error);
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    calculateProfileCompletion(mainData);
-  }, [mainData]);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/");
+    } else {
+      fetchMainData();
+    }
+  }, []);
 
   const calculateProfileCompletion = (data) => {
     let totalWeight = 0;
@@ -115,8 +162,22 @@ const CompleteProfilePage = () => {
       return value && value.toString().trim() !== "";
     };
 
+    // Special check for resume URL
+    if (data.users && data.users.resumeUrl) {
+      const resumeUrl = data.users.resumeUrl;
+      if (isFieldCompleted(resumeUrl)) {
+        completedWeight += profileSections.resume.weight;
+      } else {
+        missingItems.push("Add resume");
+      }
+      totalWeight += profileSections.resume.weight;
+    }
+
     // Process each section
     Object.entries(profileSections).forEach(([sectionKey, sectionConfig]) => {
+      // Skip resume section as it's handled separately
+      if (sectionKey === "resume") return;
+
       totalWeight += sectionConfig.weight;
 
       // Handle nested fields (like education)
@@ -224,67 +285,92 @@ const CompleteProfilePage = () => {
     setMissingDetails(missingItems.slice(0, 11));
   };
 
-  const [showEducationForm, setShowEducationForm] = useState(false);
-  const [showCareerPopup, setShowCareerPopup] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showEducationPopup, setShowEducationPopup] = useState(false);
-  const [showKeySkillsForm, setShowKeySkillsForm] = useState(false);
-  const [showProfileSummaryForm, setShowProfileSummaryForm] = useState(false);
-  const [showInternshipsForm, setShowInternshipsForm] = useState(false);
-  const [showProjectsForm, setShowProjectsForm] = useState(false);
+  // Add this new function inside CompleteProfilePage component
+  const handleAddMissingDetails = () => {
+    // You can implement logic to focus on or scroll to the first missing section
+    const firstMissing = missingDetails[0]?.toLowerCase() || "";
+    let sectionId = null;
 
-  const [educationType, setEducationType] = useState(null);
-  const [currentEditIndex, setCurrentEditIndex] = useState(null);
+    if (
+      firstMissing.includes("education") ||
+      firstMissing.includes("degree") ||
+      firstMissing.includes("class")
+    ) {
+      sectionId = "education-section";
+    } else if (firstMissing.includes("career")) {
+      sectionId = "career-preferences-section";
+    } else if (firstMissing.includes("skills")) {
+      sectionId = "skills-section";
+    } else if (firstMissing.includes("internship")) {
+      sectionId = "internships-section";
+    } else if (firstMissing.includes("project")) {
+      sectionId = "projects-section";
+    } else if (firstMissing.includes("summary")) {
+      sectionId = "profile-summary-section";
+    } else if (firstMissing.includes("resume")) {
+      sectionId = "resume-section"; // Changed from profile-sidebar
+    }
 
-  const fetchMainData = async () => {
-    setIsLoading(true);
-    const token = localStorage.getItem("token");
-    const uid = jwtDecode(token).user_id;
-    try {
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/career-preferences/getByUserId/${uid}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log(response.data);
-      setMainData(response.data);
-    } catch (error) {
-      console.error("Error fetching main data:", error);
-      setIsLoading(false);
-    } finally {
-      setIsLoading(false);
+    // Apply custom scrolling with offset if we found a section
+    if (sectionId) {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        // Get the element's position relative to the viewport
+        const elementPosition = element.getBoundingClientRect().top;
+        // Get the current scroll position
+        const scrollPosition =
+          window.pageYOffset || document.documentElement.scrollTop;
+        // Calculate the target position (current position + element position - 20px padding)
+        const targetPosition = scrollPosition + elementPosition - 70;
+
+        // Scroll to the target position smoothly
+        window.scrollTo({
+          top: targetPosition,
+          behavior: "smooth",
+        });
+      }
     }
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/");
-    } else {
-      fetchMainData();
-    }
-  }, []);
+  const getSectionWeights = () => {
+    return {
+      careerPreferences: profileSections.careerPreferences.weight,
+      education: profileSections.education.weight,
+      keySkills: profileSections.keySkills.weight,
+      internships: profileSections.internships.weight,
+      projects: profileSections.projects.weight,
+      profileSummary: profileSections.profileSummary.weight,
+      resume: profileSections.resume.weight,
+    };
+  };
 
   // Update career preferences
   const updateCareerPreferences = async (updatedPreferences) => {
     setIsLoading(true);
-    const token = localStorage.getItem("token");
     const uid = jwtDecode(token).user_id;
 
     if (!token) {
       console.error("No token found");
       setIsLoading(false);
       return;
-    } else {
+    }
+
+    try {
+      const updatedData = {
+        preferedJobType: updatedPreferences.preferedJobType,
+        preferedLocation: updatedPreferences.preferedLocation,
+        // availabilityToWork: updatedPreferences.availabilityToWork,
+        profileSummary: mainData.profileSummary,
+        keySkills: mainData.keySkills,
+        language: mainData.language,
+        resumeUrl: mainData.resumeUrl,
+      };
+
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/career-preferences/add/${uid}`,
-        updatedPreferences,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/career-preferences/update/${uid}`,
+        updatedData,
         {
           headers: {
             "Content-Type": "application/json",
@@ -292,10 +378,6 @@ const CompleteProfilePage = () => {
           },
         }
       );
-    }
-
-    try {
-      // API call commented out
 
       // Update mainData instead of separate careerPreferences state
       setMainData((prevData) => ({
@@ -342,8 +424,25 @@ const CompleteProfilePage = () => {
 
   // Handle saving education data
   const handleSaveEducation = (data) => {
-    setMainData((prevData) => {
+    setMainData(async (prevData) => {
       if (educationType === "classXII") {
+        setIsLoading(true);
+
+        const response = await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/class12/update/${
+            mainData.education.class12.class12_id
+          }`,
+          data,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        fetchMainData();
+
         return {
           ...prevData,
           education: {
@@ -352,6 +451,23 @@ const CompleteProfilePage = () => {
           },
         };
       } else if (educationType === "classX") {
+        setIsLoading(true);
+
+        const response = await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/class10/update/${
+            mainData.education.class10.class10_id
+          }`,
+          data,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        fetchMainData();
+
         return {
           ...prevData,
           education: {
@@ -369,16 +485,49 @@ const CompleteProfilePage = () => {
   // Special handler for graduate entries
   const handleSaveGraduate = (formData, editIndex) => {
     // Extract just the graduate object from the nested structure
-    const { cgpaSystem, ...graduateData } = formData.graduate;
+    const { cgpaSystem, courseType, degree_id, university, ...graduateData } =
+      formData.graduate;
 
-    setMainData((prevData) => {
+    setMainData(async (prevData) => {
       const degrees = [...prevData.education.degrees];
 
       if (editIndex !== null && editIndex !== undefined) {
+        setIsLoading(true);
         // Update existing entry
+        const response = await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/degree/update/${
+            mainData.education.degrees[editIndex].degree_id
+          }`,
+          graduateData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        fetchMainData();
+
         degrees[editIndex] = graduateData;
       } else {
-        // Add new entry
+        setIsLoading(true);
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/degree/add/${
+            mainData.education.education_id
+          }`,
+          graduateData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        fetchMainData();
+
         degrees.push(graduateData);
       }
 
@@ -390,8 +539,6 @@ const CompleteProfilePage = () => {
         },
       };
     });
-
-    console.log("Graduate data saved:", mainData.education.degrees);
 
     // Reset UI states
     setShowEducationForm(false);
@@ -425,7 +572,30 @@ const CompleteProfilePage = () => {
     setShowKeySkillsForm(!showKeySkillsForm);
   };
 
-  const handleSaveKeySkills = (skills) => {
+  const handleSaveKeySkills = async (skills) => {
+    const updatedData = {
+      preferedJobType: mainData.preferedJobType,
+      preferedLocation: mainData.preferedLocation,
+      // availabilityToWork: mainData.availabilityToWork,
+      profileSummary: mainData.profileSummary,
+      keySkills: skills.join(", "),
+      language: mainData.language,
+      resumeUrl: mainData.resumeUrl,
+    };
+
+    const response = await axios.put(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/career-preferences/update/${uid}`,
+      updatedData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
     setMainData((prevData) => ({
       ...prevData,
       keySkills: skills.join(", "),
@@ -433,20 +603,103 @@ const CompleteProfilePage = () => {
     setShowKeySkillsForm(false);
   };
 
+  // Handle edit languages
+  const handleEditLanguages = () => {
+    setShowLanguagesForm(!showLanguagesForm);
+  };
+
+  const handleSaveLanguages = async (languages) => {
+    const updatedData = {
+      preferedJobType: mainData.preferedJobType,
+      preferedLocation: mainData.preferedLocation,
+      // availabilityToWork: mainData.availabilityToWork,
+      profileSummary: mainData.profileSummary,
+      keySkills: mainData.keySkills,
+      language: languages.join(", "),
+      resumeUrl: mainData.resumeUrl,
+    };
+
+    const response = await axios.put(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/career-preferences/update/${uid}`,
+      updatedData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setMainData((prevData) => ({
+      ...prevData,
+      language: languages.join(", "),
+    }));
+    setShowLanguagesForm(false);
+  };
+
   // Handle edit profile summary
   const handleEditProfileSummary = () => {
     setShowProfileSummaryForm(!showProfileSummaryForm);
   };
 
-  const handleSaveProfileSummary = (summary) => {
+  const handleSaveProfileSummary = async (summary) => {
+    const updatedData = {
+      preferedJobType: mainData.preferedJobType,
+      preferedLocation: mainData.preferedLocation,
+      // availabilityToWork: mainData.availabilityToWork,
+      profileSummary: summary,
+      keySkills: mainData.keySkills,
+      language: mainData.language,
+      resumeUrl: mainData.resumeUrl,
+    };
+
+    const response = await axios.put(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/career-preferences/update/${uid}`,
+      updatedData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
     setMainData((prevData) => ({
       ...prevData,
       profileSummary: summary,
     }));
+
     handleEditProfileSummary();
   };
 
-  const handleDeleteProfileSummary = () => {
+  const handleDeleteProfileSummary = async () => {
+    const updatedData = {
+      preferedJobType: mainData.preferedJobType,
+      preferedLocation: mainData.preferedLocation,
+      // availabilityToWork: mainData.availabilityToWork,
+      profileSummary: "",
+      keySkills: mainData.keySkills,
+      language: mainData.language,
+      resumeUrl: mainData.resumeUrl,
+    };
+
+    const response = await axios.put(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/career-preferences/update/${uid}`,
+      updatedData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
     setMainData((prevData) => ({
       ...prevData,
       profileSummary: "",
@@ -466,14 +719,48 @@ const CompleteProfilePage = () => {
   };
 
   const handleSaveInternships = (internshipData, editIndex = null) => {
-    setMainData((prevData) => {
+    setMainData(async (prevData) => {
       const updatedInternships = [...prevData.internships];
 
       if (editIndex !== null && editIndex !== undefined) {
         // Update existing internship
-        updatedInternships[editIndex] = internshipData;
+        setIsLoading(true);
+
+        const response = await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/internships/update/${
+            mainData.internships[editIndex].internship_id
+          }`,
+          internshipData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        fetchMainData();
+
+        updatedInternships[editIndex] = response.data;
       } else {
         // Add new internship
+        setIsLoading(true);
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/internships/add/${
+            mainData.careerPreferences_id
+          }`,
+          internshipData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        fetchMainData();
+
         updatedInternships.push(internshipData);
       }
 
@@ -482,7 +769,6 @@ const CompleteProfilePage = () => {
         internships: updatedInternships,
       };
     });
-
     setCurrentEditIndex(null);
     setShowInternshipsForm(false);
   };
@@ -507,19 +793,144 @@ const CompleteProfilePage = () => {
     setShowInternshipsForm(false);
   };
 
-  // Determine profile strength level based on percentage
-  const getProfileStrength = (percentage) => {
-    if (percentage < 40) return "Basic";
-    if (percentage < 70) return "Intermediate";
-    return "Advanced";
+  // Separate functions for adding and editing projects
+  // Project handling functions
+  const handleAddProject = () => {
+    setCurrentEditIndex(null);
+    setShowProjectsForm(true);
+  };
+
+  const handleCancelProject = () => {
+    setShowProjectsForm(false);
+    setCurrentEditIndex(null);
+  };
+
+  const handleSaveProjects = (projectData) => {
+    setMainData(async (prevData) => {
+      const updatedProjects = [...prevData.projects];
+
+      const { projects_id, ...projectsData } = projectData;
+
+      if (currentEditIndex !== null) {
+        setIsLoading(true);
+        // Update existing project
+        const response = await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/project/update/${
+            mainData.projects[currentEditIndex].projects_id
+          }`,
+          projectsData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        fetchMainData();
+
+        updatedProjects[currentEditIndex] = projectData;
+      } else {
+        setIsLoading(true);
+        // Add new project with generated ID
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/project/add/${
+            mainData.careerPreferences_id
+          }`,
+          projectData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        fetchMainData();
+
+        updatedProjects.push({
+          ...projectData,
+          projects_id: Date.now().toString(),
+        });
+      }
+
+      return {
+        ...prevData,
+        projects: updatedProjects,
+      };
+    });
+
+    setShowProjectsForm(false);
+    setCurrentEditIndex(null);
+  };
+
+  const handleDeleteProject = (index) => {
+    setMainData((prevData) => {
+      const updatedProjects = [...prevData.projects];
+      updatedProjects.splice(index, 1);
+
+      return {
+        ...prevData,
+        projects: updatedProjects,
+      };
+    });
+
+    setShowProjectsForm(false);
+    setCurrentEditIndex(null);
+  };
+
+  const handleEditProject = (index) => {
+    setCurrentEditIndex(index);
+    setShowProjectsForm(true);
+  };
+
+  // Handle edit resume
+  const handleEditResume = () => {
+    setShowResumeUploadForm(!showResumeUploadForm);
+  };
+
+  const handleSaveResume = async (resumeUrl) => {
+    // Update the mainData state with the new resume URL
+    const updatedData = {
+      preferedJobType: mainData.preferedJobType,
+      preferedLocation: mainData.preferedLocation,
+      // availabilityToWork: mainData.availabilityToWork,
+      profileSummary: mainData.profileSummary,
+      keySkills: mainData.keySkills,
+      language: mainData.language,
+      resumeUrl: resumeUrl,
+    };
+
+    const response = await axios.put(
+      `${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/career-preferences/update/${uid}`,
+      updatedData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setMainData((prevData) => ({
+      ...prevData,
+      users: {
+        ...prevData.users,
+        resumeUrl: resumeUrl,
+      },
+    }));
+
+    // Close the form
+    setShowResumeUploadForm(false);
   };
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-background-light dark:bg-background-dark bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-30">
-        <div className="rounded-lg p-6 flex flex-col items-center gap-2">
-          <Loader className="w-8 h-8 animate-spin text-primary dark:text-primary-dark" />
-          <p className="text-text-secondary dark:text-text-dark_secondary">
+      <div className="flex bg-background-light justify-center dark:bg-background-dark fixed inset-0 items-center z-30">
+        <div className="flex flex-col p-6 rounded-lg gap-2 items-center">
+          <Loader className="h-8 text-primary w-8 animate-spin dark:text-primary-dark text-lg" />
+          <p className="text-text-secondary dark:text-text-dark_secondary font-normal text-2xl">
             Loading Profile...
           </p>
         </div>
@@ -528,10 +939,10 @@ const CompleteProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark">
-      <div className="max-w-6xl mx-auto p-6 pt-24">
+    <div className="bg-background-light dark:bg-background-dark min-h-screen">
+      <div className="p-6 max-w-6xl mx-auto pt-24">
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Left Column - Profile Info - Now using the ProfileSidebar component */}
           <ProfileSidebar
             userData={mainData}
@@ -541,89 +952,23 @@ const CompleteProfilePage = () => {
           {/* Right Column - Main Content */}
           <div className="lg:col-span-2">
             {/* Tabs Navigation */}
-            <div className="mb-6 border-b border-border-DEFAULT dark:border-border-dark">
+            <div className="border-b border-border-DEFAULT dark:border-border-dark mb-6">
               <div className="flex space-x-8">
-                <button className="pb-2 text-primary-500 dark:text-primary-dark font-medium border-b-2 border-primary-500 dark:border-primary-dark">
+                <button className="border-b-2 border-primary-500 text-primary-500 dark:border-primary-dark dark:text-primary-dark font-medium pb-2">
                   View & Edit
                 </button>
-                {/* <button className="pb-2 text-text-tertiary dark:text-text-dark_tertiary">
+                {/* <button className="text-text-tertiary dark:text-text-dark_tertiary pb-2">
                   Activity insights
                 </button> */}
               </div>
             </div>
-            {/* Profile Completion Card - Moved from sidebar to prominent position */}
-            <div className="bg-warning-50 dark:bg-surface-dark rounded-lg border border-warning-100 dark:border-border-dark p-6 mb-6">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-text-primary dark:text-text-dark_primary mb-2 md:mb-0">
-                  Complete your profile
-                </h2>
-                <div className="flex items-center">
-                  <div className="w-16 h-16 relative mr-4">
-                    <svg className="w-16 h-16" viewBox="0 0 100 100">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="#f1f1f1"
-                        strokeWidth="6"
-                        className="dark:stroke-border-darker"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="#f97316"
-                        strokeWidth="6"
-                        strokeDasharray={`${profileCompletion * 2.83} 283`}
-                        strokeLinecap="round"
-                        transform="rotate(-90 50 50)"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center text-warning-500 font-medium">
-                      {profileCompletion}%
-                    </div>
-                  </div>
-                  <div className="text-text-primary dark:text-text-dark_primary">
-                    <div className="text-sm mb-1">Profile strength</div>
-                    <div className="font-medium">
-                      {getProfileStrength(profileCompletion)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-4 mb-4">
-                {missingDetails.slice(0, 3).map((detail, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-surface-DEFAULT dark:bg-surface-dark rounded-md border border-border-DEFAULT dark:border-border-dark"
-                  >
-                    <div className="flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-text-tertiary dark:text-text-dark_tertiary"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                      </svg>
-                      <span className="text-text-secondary dark:text-text-dark_secondary">
-                        {detail}
-                      </span>
-                    </div>
-                    <span className="text-success-500 dark:text-success-dark text-sm">
-                      ↑ {Math.floor(5 + Math.random() * 5)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <button className="w-full bg-warning-500 hover:bg-warning-600 dark:bg-warning-dark dark:hover:bg-warning-600 text-white py-3 px-4 rounded-md font-medium">
-                Add {missingDetails.length} missing details
-              </button>
-            </div>
+            {/* Profile Completion Card */}
+            <ProfileCompletionCard
+              profileCompletion={profileCompletion}
+              missingDetails={missingDetails}
+              handleAddMissingDetails={handleAddMissingDetails}
+              sectionWeights={getSectionWeights()}
+            />
 
             <div id="career-preferences-section"></div>
             <CareerPreferencesSection
@@ -649,7 +994,7 @@ const CompleteProfilePage = () => {
             {/* Education Section */}
             <div id="education-section">
               <EducationSection
-                educationData={mainData.education}
+                educationData={mainData.education || {}}
                 handleAddEducation={handleAddEducation}
                 handleEditEducation={handleEditEducation}
                 handleAddEducationForm={handleAddEducationForm}
@@ -707,6 +1052,22 @@ const CompleteProfilePage = () => {
               />
             )}
 
+            {/* Languages Section */}
+            <div id="languages-section">
+              <LanguagesSection
+                languages={mainData.language}
+                onEdit={handleEditLanguages}
+              />
+            </div>
+
+            {showLanguagesForm && (
+              <LanguageForm
+                onCancel={handleEditLanguages}
+                onSave={handleSaveLanguages}
+                initialLanguages={mainData.language}
+              />
+            )}
+
             {/* Profile Summary Section */}
             <div id="profile-summary-section">
               <ProfileSummarySection
@@ -744,6 +1105,42 @@ const CompleteProfilePage = () => {
                     : null
                 }
                 editIndex={currentEditIndex}
+              />
+            )}
+
+            {/* Projects Section */}
+            <div id="projects-section">
+              <ProjectsSection
+                projects={mainData.projects}
+                onAdd={handleAddProject}
+                onEdit={handleEditProject}
+              />
+            </div>
+
+            {showProjectsForm && (
+              <AddProjectsForm
+                onCancel={handleCancelProject}
+                onSave={handleSaveProjects}
+                onDelete={handleDeleteProject}
+                initialProjects={
+                  currentEditIndex !== null
+                    ? mainData.projects[currentEditIndex]
+                    : null
+                }
+                editIndex={currentEditIndex}
+              />
+            )}
+
+            <ResumeSection
+              resumelink={mainData.resumeUrl}
+              onEdit={handleEditResume}
+            />
+
+            {showResumeUploadForm && (
+              <ResumeUploadForm
+                onCancel={() => setShowResumeUploadForm(false)}
+                onSave={handleSaveResume}
+                initialResumeUrl={mainData.resumeUrl}
               />
             )}
           </div>

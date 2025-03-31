@@ -6,6 +6,11 @@ const EducationSection = ({
   handleEditEducation,
   handleAddEducationForm,
 }) => {
+  const formatYear = (dateString) => {
+    if (!dateString) return "Present"; // Handle empty values
+    return new Date(dateString).getFullYear();
+  };
+
   return (
     <div className="bg-surface-DEFAULT dark:bg-surface-dark rounded-lg shadow-sm p-6 mb-6">
       <div className="flex justify-between items-center mb-6">
@@ -13,7 +18,7 @@ const EducationSection = ({
           Education
         </h2>
         <button
-          className="text-primary-500 dark:text-primary-dark"
+          className="text-primary-500 dark:text-primary-dark hover:text-primary-hover dark:hover:text-primary-dark_hover"
           onClick={handleAddEducationForm}
         >
           Add
@@ -43,7 +48,9 @@ const EducationSection = ({
                       {grad.university} {grad.cgpa && `• CGPA: ${grad.cgpa}`}
                     </p>
                     <p className="text-text-tertiary dark:text-text-dark_tertiary">
-                      {grad.courseDurationFrom} - {grad.courseDurationTo}
+                      • Duration : {formatYear(grad.courseDurationFrom)}{" "}
+                      {" to "}
+                      {formatYear(grad.courseDurationTo)}
                       {grad.courseType && `, ${grad.courseType}`}
                     </p>
                   </div>

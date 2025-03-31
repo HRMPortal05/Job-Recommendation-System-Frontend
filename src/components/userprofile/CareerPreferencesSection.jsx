@@ -4,10 +4,6 @@ const CareerPreferencesSection = ({
   careerPreferences,
   handleAddCareer,
   handleEditCareer,
-  showCareerPopup,
-  setShowCareerPopup,
-  updateCareerPreferences,
-  isLoading,
 }) => {
   // Check if all preferences are empty
   const arePreferencesEmpty = () => {

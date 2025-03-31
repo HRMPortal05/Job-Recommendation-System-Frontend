@@ -53,15 +53,7 @@ const NotificationButton = () => {
     );
   }
 
-  return (
-    <button
-      className="notification-request-btn"
-      onClick={requestPermission}
-      disabled={loading}
-    >
-      {loading ? "Enabling..." : "Enable Notifications"}
-    </button>
-  );
+  return null;
 };
 
 export default NotificationButton;

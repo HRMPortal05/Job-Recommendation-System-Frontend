@@ -12,6 +12,7 @@ import UserProfile from "./components/userprofile/UserProfile.jsx";
 import AddJobForm from "./components/jobs/AddJobForm.jsx";
 import CompleteProfilePage from "./components/userprofile/CompleteProfilePage.jsx";
 import RemoteJobList from "./components/jobs/RemoteJobList.jsx";
+import ResumeATSChecker from "./components/atschecker/ResumeATSChecker.jsx";
 
 const router = createBrowserRouter([
   {
@@ -30,6 +31,7 @@ const router = createBrowserRouter([
       { path: "completeprofile", element: <CompleteProfilePage /> },
       { path: "postjob", element: <AddJobForm /> },
       { path: "remote-jobs", element: <RemoteJobList /> },
+      { path: "ats-score", element: <ResumeATSChecker /> },
     ],
   },
   {
@@ -47,7 +49,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 );
 
 if ("serviceWorker" in navigator) {
-  console.log("Service worker is supported in this browser");
+  // console.log("Service worker is supported in this browser");
 } else {
   // alert("Service worker is NOT supported in this browser");
 }

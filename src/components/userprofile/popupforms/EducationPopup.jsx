@@ -96,6 +96,7 @@ const EducationPopup = ({
                   <option value="">Select Board</option>
                   <option value="CBSE">CBSE</option>
                   <option value="ICSE">ICSE</option>
+                  <option value="GSEB">GSEB</option>
                   <option value="State Board">State Board</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
@@ -259,6 +260,7 @@ const EducationPopup = ({
                   <option value="">Select Board</option>
                   <option value="CBSE">CBSE</option>
                   <option value="ICSE">ICSE</option>
+                  <option value="GSEB">GSEB</option>
                   <option value="State Board">State Board</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">

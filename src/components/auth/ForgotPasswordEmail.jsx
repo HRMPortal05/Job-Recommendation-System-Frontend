@@ -39,7 +39,6 @@ const ForgotPasswordEmail = () => {
         autoHideDuration: 3000,
       });
     } catch (err) {
-      console.log(err);
       setError(err.response?.data?.error || "Failed to send reset link");
     } finally {
       setLoading(false);

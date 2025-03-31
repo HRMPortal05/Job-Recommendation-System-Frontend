@@ -20,8 +20,8 @@ const App = () => {
   }, [location, navigate]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* <NotificationInitializer /> */}
+    <div className="flex flex-col min-h-screen font-sans">
+      <NotificationInitializer />
       <Navbar />
       <NotificationButton />
       <main className="flex-1">
