@@ -45,7 +45,10 @@ const EducationSection = ({
                       {grad.courseName && ` in ${grad.courseName}`}
                     </h5>
                     <p className="text-text-secondary dark:text-text-dark_secondary mb-1">
-                      {grad.university} {grad.cgpa && `• CGPA: ${grad.cgpa}`}
+                      {grad.universityName}{" "}
+                    </p>
+                    <p className="text-text-secondary dark:text-text-dark_secondary mb-1">
+                      {grad.cgpa && `• CGPA: ${grad.cgpa}`}
                     </p>
                     <p className="text-text-tertiary dark:text-text-dark_tertiary">
                       • Duration : {formatYear(grad.courseDurationFrom)}{" "}

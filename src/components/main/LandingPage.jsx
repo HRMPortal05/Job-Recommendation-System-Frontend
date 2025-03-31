@@ -9,6 +9,8 @@ import {
   TrendingUp,
   Zap,
   Star,
+  FileText,
+  X,
 } from "lucide-react";
 import job_hunt from "../../images/job-hunt.svg";
 import { useNavigate } from "react-router-dom";
@@ -27,13 +29,50 @@ const LandingPage = () => {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [allCities, setAllCities] = useState([]);
   const [allJobs, setAllJobs] = useState([]);
+  const [showNotification, setShowNotification] = useState(false);
+  const [isAnimatingIn, setIsAnimatingIn] = useState(false);
+  const currentDate = new Date().toDateString();
 
   useEffect(() => {
     setIsVisible(true);
-    // Load city data and job data when component mounts
     loadCityData();
     loadJobData();
+
+    // Check if this is the first visit and trigger notification
+    const lastVisitDate = localStorage.getItem("lastVisitDate");
+
+    if (!lastVisitDate || lastVisitDate !== currentDate) {
+      setShowNotification(true); // Mount the notification
+      // Trigger the entering animation after a slight delay
+      const animationTimer = setTimeout(() => {
+        setIsAnimatingIn(true);
+      }, 2000); // Small delay to ensure the component mounts first
+
+      return () => clearTimeout(animationTimer);
+    }
   }, []);
+
+  // Function to dismiss the notification with exit animation
+  const dismissNotification = () => {
+    setIsAnimatingIn(false); // Trigger exit animation
+    setTimeout(() => {
+      setShowNotification(false); // Remove from DOM after animation
+      localStorage.setItem("lastVisitDate", currentDate);
+    }, 500); // Match CSS transition duration
+  };
+
+  // Function to navigate to ATS score page
+  const goToResumeUpload = () => {
+    if (localStorage.getItem("token")) {
+      navigate("/ats-score");
+    } else {
+      enqueueSnackbar("Please login to upload your resume", {
+        variant: "warning",
+        autoHideDuration: 3000,
+      });
+    }
+    dismissNotification();
+  };
 
   // Function to load job titles data
   const loadJobData = async () => {
@@ -266,34 +305,64 @@ const LandingPage = () => {
     }
   };
 
-  const [token, setToken] = useState("");
+  const [FcmToken, setFcmToken] = useState("");
   useEffect(() => {
     requestNotificationPermission().then((fcmToken) => {
       if (fcmToken) {
-        setToken(fcmToken);
+        setFcmToken(fcmToken);
       }
     });
   }, []);
-  const copyToClipboard = () => {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard
-        .writeText(token)
-        .then(() => alert("FCM Token copied!"))
-        .catch(() => alert("Copy failed! Please copy manually."));
-    } else {
-      // Fallback for older devices
-      const textarea = document.createElement("textarea");
-      textarea.value = token;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-      alert("FCM Token copied!");
-    }
-  };
 
   return (
     <div className="flex flex-col">
+      {/* First-time visitor notification */}
+      {showNotification && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 max-w-md bg-primary-600 dark:bg-primary-dark text-white p-4 rounded-lg shadow-xl transition-all duration-500 ease-in-out ${
+            isAnimatingIn
+              ? "translate-x-0 opacity-100" // Visible state (entered)
+              : "translate-x-full opacity-0" // Hidden state (initial or exiting)
+          }`}
+        >
+          <div className="flex items-start">
+            <div className="mr-4">
+              <FileText className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg mb-1">
+                Welcome to our Job Platform!
+              </h3>
+              <p className="mb-3">
+                Improve your chances of getting hired by submitting your resume
+                to check your ATS score. Our AI will analyze your resume and
+                provide optimization tips.
+              </p>
+              <div className="flex space-x-2">
+                <button
+                  onClick={goToResumeUpload}
+                  className="px-4 py-2 bg-white text-primary-600 rounded-md hover:bg-gray-100 transition-colors duration-150"
+                >
+                  Upload Resume
+                </button>
+                <button
+                  onClick={dismissNotification}
+                  className="px-4 py-2 bg-primary-700 dark:bg-primary-dark_hover rounded-md hover:bg-primary-800 transition-colors duration-150"
+                >
+                  Later
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={dismissNotification}
+              className="ml-2 text-white hover:text-gray-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center px-4 sm:px-8">
         <div className="max-w-7xl w-full mt-10">
@@ -416,7 +485,7 @@ const LandingPage = () => {
                 </button>
               </div>
 
-              {/* Popular Searches */}
+              {/* Popular Searches - Fixed dark mode issue */}
               <div className="mt-8 text-text-secondary dark:text-text-dark_secondary">
                 <p className="mb-2 font-medium">Popular searches:</p>
                 <div className="flex flex-wrap gap-2">
@@ -433,6 +502,7 @@ const LandingPage = () => {
                       style={{
                         opacity: isVisible ? 1 : 0,
                         transitionDelay: `${index * 100}ms`,
+                        backgroundColor: "inherit", // This removes any background color during transition
                       }}
                       onClick={() =>
                         setSearchQuery(tag.split(" ").slice(1).join(" "))
@@ -444,28 +514,6 @@ const LandingPage = () => {
                 </div>
               </div>
             </div>
-
-            {/* <div className="p-4 block md:hidden lg:hidden">
-              <h2 className="text-lg font-bold">FCM Token</h2>
-              {token ? (
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    value={token}
-                    readOnly
-                    className="p-2 border rounded-md w-full"
-                  />
-                  <button
-                    onClick={copyToClipboard}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                  >
-                    Copy Token
-                  </button>
-                </div>
-              ) : (
-                <p>Fetching token...2</p>
-              )}
-            </div> */}
 
             {/* Right Side */}
             <div

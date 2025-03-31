@@ -17,8 +17,9 @@ const AddEducationForm = ({
     graduate: {
       degreeName: "",
       courseName: "",
-      university: "",
+      universityName: "",
       cgpa: "",
+      cgpaSystem: "", // Added cgpaSystem as a separate field
       courseDurationFrom: "",
       courseDurationTo: "",
       courseType: "",
@@ -27,6 +28,22 @@ const AddEducationForm = ({
   // Add validation state
   const [validationErrors, setValidationErrors] = useState({});
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const generateYearOptions = (startYear, endYear) => {
+    const years = [];
+    for (let year = startYear; year <= endYear; year++) {
+      years.push(year);
+    }
+    return years;
+  };
+
+  const currentYear = new Date().getFullYear();
+  const [availableStartYears] = useState(
+    generateYearOptions(currentYear - 20, currentYear + 5)
+  );
+  const [availableEndYears, setAvailableEndYears] = useState(
+    generateYearOptions(currentYear - 20, currentYear + 10)
+  );
 
   // University data from the JSON file
   const universities = universitiesData;
@@ -37,9 +54,32 @@ const AddEducationForm = ({
   useEffect(() => {
     if (initialData && educationType) {
       if (educationType === "graduate") {
+        // Parse CGPA and system from the combined format if it exists
+        let cgpaValue = "";
+        let cgpaSystem = "";
+
+        if (initialData.cgpa) {
+          // Handle the format like "7.9 GPA out of 10"
+          const cgpaMatch = initialData.cgpa.match(/^([\d.]+)\s+(.+)$/);
+          if (cgpaMatch) {
+            cgpaValue = cgpaMatch[1]; // The actual number value
+            cgpaSystem = cgpaMatch[2]; // The system, e.g. "GPA out of 10"
+          } else if (initialData.cgpa === "Course requires a pass") {
+            cgpaSystem = "Course requires a pass";
+            cgpaValue = "";
+          } else {
+            cgpaValue = initialData.cgpa;
+          }
+        }
+
         setFormData({
-          graduate: { ...initialData },
+          graduate: {
+            ...initialData,
+            cgpa: cgpaValue, // Store just the value part
+            cgpaSystem: cgpaSystem, // Store the system part separately
+          },
         });
+
         // If we have initial graduate data, we can set the degree and move to step 2
         if (initialData.degreeName || initialData.courseName) {
           setSelectedDegree(initialData.degreeName || "Graduate/Diploma");
@@ -78,13 +118,11 @@ const AddEducationForm = ({
     }
 
     if (field === "cgpaValue") {
-      // When changing CGPA value, update the cgpa field with the value
+      // When changing CGPA value, update just the cgpa field with the value
       setFormData({
         graduate: {
           ...formData.graduate,
-          cgpa: formData.graduate.cgpaSystem
-            ? `${value} ${formData.graduate.cgpaSystem}`
-            : value,
+          cgpa: value,
         },
       });
     } else if (field === "cgpa") {
@@ -93,10 +131,39 @@ const AddEducationForm = ({
         graduate: {
           ...formData.graduate,
           cgpaSystem: value,
-          // Reset or set the combined cgpa value when changing system
-          cgpa: value === "Course requires a pass" ? value : "",
+          // Reset or set the cgpa value when changing system
+          cgpa:
+            value === "Course requires a pass" ? "" : formData.graduate.cgpa,
         },
       });
+    } else if (field === "courseDurationFrom") {
+      // When selecting start year, update end year options
+      const startYear = parseInt(value);
+      setAvailableEndYears(
+        generateYearOptions(startYear + 1, currentYear + 10)
+      );
+
+      // If end year is less than start year, reset it
+      const endYear = formData.graduate.courseDurationTo
+        ? parseInt(formData.graduate.courseDurationTo.substring(0, 4))
+        : 0;
+
+      if (endYear <= startYear) {
+        setFormData({
+          graduate: {
+            ...formData.graduate,
+            courseDurationFrom: value,
+            courseDurationTo: "", // Reset end year if it's less than start year
+          },
+        });
+      } else {
+        setFormData({
+          graduate: {
+            ...formData.graduate,
+            courseDurationFrom: value,
+          },
+        });
+      }
     } else {
       // For all other fields, handle normally
       setFormData({
@@ -107,8 +174,8 @@ const AddEducationForm = ({
       });
     }
 
-    // If the field is university, filter suggestions
-    if (field === "university") {
+    // If the field is universityName, filter suggestions
+    if (field === "universityName") {
       handleUniversityInputChange(value);
     }
   };
@@ -131,16 +198,16 @@ const AddEducationForm = ({
     setFormData({
       graduate: {
         ...formData.graduate,
-        university: university.Name,
+        universityName: university.Name,
       },
     });
     setShowSuggestions(false);
 
-    // Clear validation error for university field
-    if (validationErrors.university) {
+    // Clear validation error for universityName field
+    if (validationErrors.universityName) {
       setValidationErrors({
         ...validationErrors,
-        university: false,
+        universityName: false,
       });
     }
   };
@@ -150,18 +217,14 @@ const AddEducationForm = ({
     const errors = {};
     const requiredFields = [
       "courseName",
-      "university",
+      "universityName",
       "courseDurationFrom",
       "courseDurationTo",
       "courseType",
     ];
 
     // Check if grading system requires input
-    if (
-      shouldShowCgpaInput() &&
-      (!formData.graduate.cgpa ||
-        formData.graduate.cgpa.split(" ")[0].trim() === "")
-    ) {
+    if (shouldShowCgpaInput() && !formData.graduate.cgpa) {
       errors.cgpaValue = true;
     }
 
@@ -182,10 +245,38 @@ const AddEducationForm = ({
     const isValid = validateForm();
 
     if (isValid) {
-      // Call the parent component's onSave with the form data and edit index if provided
-      formData.graduate.courseDurationTo = `${formData.graduate.courseDurationTo}-01-01`;
-      formData.graduate.courseDurationFrom = `${formData.graduate.courseDurationFrom}-01-01`;
-      onSave(formData, editIndex);
+      // Create a copy of the form data for submission
+      const submissionData = {
+        graduate: {
+          ...formData.graduate,
+        },
+      };
+
+      // Combine cgpa and cgpaSystem for the final submission format
+      if (formData.graduate.cgpaSystem) {
+        if (formData.graduate.cgpaSystem === "Course requires a pass") {
+          submissionData.graduate.cgpa = "Course requires a pass";
+        } else if (formData.graduate.cgpa) {
+          submissionData.graduate.cgpa = `${formData.graduate.cgpa} ${formData.graduate.cgpaSystem}`;
+        }
+      }
+
+      if (editIndex !== undefined && editIndex !== null) {
+        // Extract only the year and keep the existing month and day
+        submissionData.graduate.courseDurationTo =
+          formData.graduate.courseDurationTo.substring(0, 4) +
+          formData.graduate.courseDurationTo.substring(4);
+        submissionData.graduate.courseDurationFrom =
+          formData.graduate.courseDurationFrom.substring(0, 4) +
+          formData.graduate.courseDurationFrom.substring(4);
+      } else {
+        // Create a full date with default month and day
+        submissionData.graduate.courseDurationTo = `${formData.graduate.courseDurationTo}-01-01`;
+        submissionData.graduate.courseDurationFrom = `${formData.graduate.courseDurationFrom}-01-01`;
+      }
+
+      // Call the parent component's onSave
+      onSave(submissionData, editIndex);
     }
   };
 
@@ -378,16 +469,16 @@ const AddEducationForm = ({
                   <div className="relative">
                     <input
                       type="text"
-                      className={getInputFieldClass("university")}
+                      className={getInputFieldClass("universityName")}
                       placeholder="Start typing to search for your university..."
-                      value={formData.graduate.university}
+                      value={formData.graduate.universityName}
                       onChange={(e) =>
-                        handleChange("university", e.target.value)
+                        handleChange("universityName", e.target.value)
                       }
                       onFocus={() => {
-                        if (formData.graduate.university) {
+                        if (formData.graduate.universityName) {
                           handleUniversityInputChange(
-                            formData.graduate.university
+                            formData.graduate.universityName
                           );
                         }
                       }}
@@ -411,7 +502,7 @@ const AddEducationForm = ({
                     )}
                     {showSuggestions &&
                       universitySuggestions.length === 0 &&
-                      formData.graduate.university && (
+                      formData.graduate.universityName && (
                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-3">
                           No universities found. Please enter a different name.
                         </div>
@@ -479,7 +570,7 @@ const AddEducationForm = ({
                             : "w-full p-3 border border-border rounded-md"
                         }
                         placeholder={getCgpaPlaceholder()}
-                        value={formData.graduate.cgpa.split(" ")[0] || ""}
+                        value={formData.graduate.cgpa || ""}
                         onChange={(e) =>
                           handleChange("cgpaValue", e.target.value)
                         }
@@ -500,16 +591,24 @@ const AddEducationForm = ({
                             ? "w-full p-3 border border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500 rounded-md appearance-none"
                             : "w-full p-3 border border-border rounded-md appearance-none"
                         }
-                        value={formData.graduate.courseDurationFrom}
+                        value={
+                          formData.graduate.courseDurationFrom
+                            ? formData.graduate.courseDurationFrom.substring(
+                                0,
+                                4
+                              )
+                            : ""
+                        }
                         onChange={(e) =>
                           handleChange("courseDurationFrom", e.target.value)
                         }
                       >
                         <option value="">Starting year</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                        <option value="2022">2022</option>
-                        <option value="2021">2021</option>
+                        {availableStartYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
                       </select>
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <svg
@@ -535,16 +634,35 @@ const AddEducationForm = ({
                             ? "w-full p-3 border border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500 rounded-md appearance-none"
                             : "w-full p-3 border border-border rounded-md appearance-none"
                         }
-                        value={formData.graduate.courseDurationTo}
+                        value={
+                          formData.graduate.courseDurationTo
+                            ? formData.graduate.courseDurationTo.substring(0, 4)
+                            : ""
+                        }
                         onChange={(e) =>
                           handleChange("courseDurationTo", e.target.value)
                         }
+                        disabled={!formData.graduate.courseDurationFrom} // Disable if start year is not selected
                       >
                         <option value="">Ending year</option>
-                        <option value="2028">2028</option>
-                        <option value="2027">2027</option>
-                        <option value="2026">2026</option>
-                        <option value="2025">2025</option>
+                        {availableEndYears.map((year) => (
+                          <option
+                            key={year}
+                            value={year}
+                            disabled={
+                              formData.graduate.courseDurationFrom &&
+                              parseInt(year) <=
+                                parseInt(
+                                  formData.graduate.courseDurationFrom.substring(
+                                    0,
+                                    4
+                                  )
+                                )
+                            }
+                          >
+                            {year}
+                          </option>
+                        ))}
                       </select>
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <svg

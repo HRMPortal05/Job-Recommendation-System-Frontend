@@ -215,7 +215,6 @@ const Navbar = () => {
       items: [
         { label: "Find Job", href: "joblist?job=&location=" },
         { label: "Remote Job", href: "remote-jobs" },
-        { label: "Apply Now", href: "#" },
       ],
     },
     // {
@@ -231,7 +230,7 @@ const Navbar = () => {
       items: [
         { label: "Browse Candidates", href: "#" },
         { label: "Candidate Profile", href: "#" },
-        { label: "Submit Resume", href: "#" },
+        { label: "Submit Resume", href: "completeprofile" },
       ],
     },
     {

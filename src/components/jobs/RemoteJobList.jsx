@@ -134,9 +134,9 @@ const RemoteJobList = () => {
   return (
     <div className="bg-gray-50 dark:bg-background-darker min-h-screen">
       {/* Hero section */}
-      <div className="max-w-6xl mx-auto px-4 mt-16">
+      <div className="max-w-6xl mx-auto px-4">
         <div className="bg-white dark:bg-background-dark rounded-lg p-6">
-          <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2">
+          <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-12">
             Find Your Perfect Remote Opportunity
           </h2>
           <p className="text-sm md:text-base text-text-secondary dark:text-text-dark_secondary mb-4">
@@ -503,7 +503,7 @@ const RemoteJobList = () => {
       </div>
 
       {/* Footer */}
-      <div className="bg-white dark:bg-surface-dark border-t border-gray-200 mt-8">
+      <div className="bg-white dark:bg-surface-dark border-t border-border-DEFAULT dark:border-border-dark mt-8">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
             <p>© 2025 Remote Job Board. All rights reserved.</p>

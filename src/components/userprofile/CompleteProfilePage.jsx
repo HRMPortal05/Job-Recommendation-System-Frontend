@@ -123,6 +123,7 @@ const CompleteProfilePage = () => {
           },
         }
       );
+      console.log("Main data response:", response.data);
       calculateProfileCompletion(response.data);
       setMainData(response.data);
     } catch (error) {
@@ -359,7 +360,7 @@ const CompleteProfilePage = () => {
       const updatedData = {
         preferedJobType: updatedPreferences.preferedJobType,
         preferedLocation: updatedPreferences.preferedLocation,
-        // availabilityToWork: updatedPreferences.availabilityToWork,
+        availabilityToWork: updatedPreferences.availabilityToWork,
         profileSummary: mainData.profileSummary,
         keySkills: mainData.keySkills,
         language: mainData.language,
@@ -485,8 +486,7 @@ const CompleteProfilePage = () => {
   // Special handler for graduate entries
   const handleSaveGraduate = (formData, editIndex) => {
     // Extract just the graduate object from the nested structure
-    const { cgpaSystem, courseType, degree_id, university, ...graduateData } =
-      formData.graduate;
+    const { cgpaSystem, degree_id, ...graduateData } = formData.graduate;
 
     setMainData(async (prevData) => {
       const degrees = [...prevData.education.degrees];
@@ -494,6 +494,7 @@ const CompleteProfilePage = () => {
       if (editIndex !== null && editIndex !== undefined) {
         setIsLoading(true);
         // Update existing entry
+        console.log(graduateData);
         const response = await axios.put(
           `${import.meta.env.VITE_BACKEND_URL}/api/degree/update/${
             mainData.education.degrees[editIndex].degree_id
@@ -576,7 +577,7 @@ const CompleteProfilePage = () => {
     const updatedData = {
       preferedJobType: mainData.preferedJobType,
       preferedLocation: mainData.preferedLocation,
-      // availabilityToWork: mainData.availabilityToWork,
+      availabilityToWork: mainData.availabilityToWork,
       profileSummary: mainData.profileSummary,
       keySkills: skills.join(", "),
       language: mainData.language,
@@ -612,7 +613,7 @@ const CompleteProfilePage = () => {
     const updatedData = {
       preferedJobType: mainData.preferedJobType,
       preferedLocation: mainData.preferedLocation,
-      // availabilityToWork: mainData.availabilityToWork,
+      availabilityToWork: mainData.availabilityToWork,
       profileSummary: mainData.profileSummary,
       keySkills: mainData.keySkills,
       language: languages.join(", "),
@@ -648,7 +649,7 @@ const CompleteProfilePage = () => {
     const updatedData = {
       preferedJobType: mainData.preferedJobType,
       preferedLocation: mainData.preferedLocation,
-      // availabilityToWork: mainData.availabilityToWork,
+      availabilityToWork: mainData.availabilityToWork,
       profileSummary: summary,
       keySkills: mainData.keySkills,
       language: mainData.language,
@@ -680,7 +681,7 @@ const CompleteProfilePage = () => {
     const updatedData = {
       preferedJobType: mainData.preferedJobType,
       preferedLocation: mainData.preferedLocation,
-      // availabilityToWork: mainData.availabilityToWork,
+      availabilityToWork: mainData.availabilityToWork,
       profileSummary: "",
       keySkills: mainData.keySkills,
       language: mainData.language,

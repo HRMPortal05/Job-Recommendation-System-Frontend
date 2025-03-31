@@ -35,6 +35,14 @@ const EducationPopup = ({
     passingYear: false,
   });
 
+  // Generate years dynamically
+  const currentYear = new Date().getFullYear();
+  // For school education, we typically need past years (going back 30 years should be enough)
+  const availableYears = Array.from(
+    { length: 30 },
+    (_, i) => currentYear - 29 + i
+  );
+
   //scroll lock
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -206,13 +214,11 @@ const EducationPopup = ({
                   }
                 >
                   <option value="">Select Year</option>
-                  {Array.from({ length: 10 }, (_, i) => 2015 + i).map(
-                    (year) => (
-                      <option key={year} value={year.toString()}>
-                        {year}
-                      </option>
-                    )
-                  )}
+                  {availableYears.map((year) => (
+                    <option key={year} value={year.toString()}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
                   <svg
@@ -370,13 +376,11 @@ const EducationPopup = ({
                   }
                 >
                   <option value="">Select Year</option>
-                  {Array.from({ length: 10 }, (_, i) => 2015 + i).map(
-                    (year) => (
-                      <option key={year} value={year.toString()}>
-                        {year}
-                      </option>
-                    )
-                  )}
+                  {availableYears.map((year) => (
+                    <option key={year} value={year.toString()}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
                   <svg

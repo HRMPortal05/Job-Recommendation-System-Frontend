@@ -32,6 +32,9 @@ const ResumeATSChecker = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [cloudinaryUrl, setCloudinaryUrl] = useState("");
 
+  // Store the Cloudinary URL in a ref to access it across steps
+  const cloudinaryUrlRef = useRef("");
+
   // Animation refs
   const scoreAnimationRef = useRef(null);
 
@@ -248,6 +251,9 @@ const ResumeATSChecker = () => {
         xhr.onload = function () {
           if (xhr.status === 200) {
             const response = JSON.parse(xhr.responseText);
+            // Store the URL in the ref for immediate access
+            cloudinaryUrlRef.current = response.secure_url;
+            // Also update the state for UI updates
             setCloudinaryUrl(response.secure_url);
             resolve(response.secure_url);
           } else {
@@ -292,7 +298,7 @@ const ResumeATSChecker = () => {
 
       return response.data;
     } catch (error) {
-      console.error("Error analyzing resume:", error.response.data);
+      console.error("Error analyzing resume:", error);
       throw new Error("Failed to analyze resume. Please try again.");
     }
   };
@@ -318,7 +324,7 @@ const ResumeATSChecker = () => {
       }/resources/image/upload/${publicId}`;
 
       // Send DELETE request to Cloudinary
-      const response = await axios.delete(cloudinaryUrl, {
+      await axios.delete(cloudinaryUrl, {
         params: { public_id: publicId },
         headers: { Authorization: authHeader },
       });
@@ -342,6 +348,9 @@ const ResumeATSChecker = () => {
     setUploadProgress(0);
     setIsUploading(true);
 
+    // Reset the cloudinary URL ref
+    cloudinaryUrlRef.current = "";
+
     let step = -1;
 
     const runNextStep = async () => {
@@ -358,7 +367,8 @@ const ResumeATSChecker = () => {
         // On the first step, upload to Cloudinary
         if (step === 0) {
           try {
-            const cloudinaryUrl = await uploadToCloudinary();
+            const uploadedUrl = await uploadToCloudinary();
+            // Wait a bit to ensure state is updated
             setTimeout(runNextStep, randomDelay);
           } catch (error) {
             console.error("Upload error:", error);
@@ -371,10 +381,17 @@ const ResumeATSChecker = () => {
         // On the last step, process with backend
         else if (step === thinkingSteps.length - 1) {
           try {
-            const data = await sendUrlToBackend(cloudinaryUrl);
+            // Use the ref value instead of the state
+            const url = cloudinaryUrlRef.current;
+
+            if (!url) {
+              throw new Error("Upload URL not available");
+            }
+
+            const data = await sendUrlToBackend(url);
 
             // Once we have the data, delete the file from Cloudinary
-            await deleteFromCloudinary(cloudinaryUrl);
+            await deleteFromCloudinary(url);
 
             if (data) {
               setAnalysisData(data);
@@ -393,8 +410,8 @@ const ResumeATSChecker = () => {
             setIsUploading(false);
 
             // Still try to delete the file even if analysis failed
-            if (cloudinaryUrl) {
-              await deleteFromCloudinary(cloudinaryUrl);
+            if (cloudinaryUrlRef.current) {
+              await deleteFromCloudinary(cloudinaryUrlRef.current);
             }
           }
         } else {
@@ -441,6 +458,7 @@ const ResumeATSChecker = () => {
     setOverallRecommendations([]);
     setUploadProgress(0);
     setCloudinaryUrl("");
+    cloudinaryUrlRef.current = "";
   };
 
   const getScoreColor = (score) => {
