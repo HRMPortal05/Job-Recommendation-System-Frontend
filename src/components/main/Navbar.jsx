@@ -13,6 +13,7 @@ import {
   LogOut,
   User,
   KeyRound,
+  FileUser,
 } from "lucide-react";
 import { useTheme } from "../../theme/DarkMode";
 import SignUp from "../auth/SignUp";
@@ -376,9 +377,12 @@ const Navbar = () => {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-4 md:space-x-6 lg:space-x-6">
-              <button className="hidden md:flex items-center space-x-2 text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
-                <Upload className="h-4 w-4" />
-                <span>Upload CV</span>
+              <button
+                onClick={() => navigate("/ats-score")}
+                className="hidden md:flex items-center space-x-2 text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+              >
+                <FileUser className="h-4 w-4" />
+                <span>Check Your Score</span>
               </button>
               {!localStorage.getItem("token") && (
                 <button
@@ -440,8 +444,8 @@ const Navbar = () => {
 
               <div className="mt-4 px-4 space-y-1 mb-12 border-t border-border dark:border-border-dark py-4">
                 <button className="w-full flex items-center justify-center space-x-2 text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors py-2">
-                  <Upload className="h-4 w-4" />
-                  <span>Upload CV</span>
+                  <FileUser className="h-4 w-4" />
+                  <span>Check Your Score</span>
                 </button>
                 {!localStorage.getItem("token") && (
                   <button

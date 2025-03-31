@@ -108,6 +108,12 @@ const CompleteProfilePage = () => {
   const token = localStorage.getItem("token");
   const uid = jwtDecode(token).user_id;
 
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  }, [token]);
+
   const fetchMainData = async () => {
     setIsLoading(true);
 

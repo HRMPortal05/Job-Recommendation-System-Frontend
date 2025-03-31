@@ -132,11 +132,11 @@ const RemoteJobList = () => {
   const shutterSegments = 1;
 
   return (
-    <div className="bg-gray-50 dark:bg-background-darker min-h-screen">
+    <div className="bg-background dark:bg-background-dark min-h-screen">
       {/* Hero section */}
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto">
         <div className="bg-white dark:bg-background-dark rounded-lg p-6">
-          <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-12">
+          <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-20">
             Find Your Perfect Remote Opportunity
           </h2>
           <p className="text-sm md:text-base text-text-secondary dark:text-text-dark_secondary mb-4">
@@ -266,7 +266,7 @@ const RemoteJobList = () => {
               filteredJobs.map((job) => (
                 <div
                   key={job.id}
-                  className="bg-white dark:bg-background-dark border border-border-DEFAULT dark:border-border-dark rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
+                  className="bg-surface dark:bg-background-dark border border-border-DEFAULT dark:border-border-dark rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   <div
                     className="p-5 cursor-pointer"
@@ -304,7 +304,7 @@ const RemoteJobList = () => {
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900 text-primary-700 dark:text-primary-dark text-xs font-medium rounded-full">
+                          <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900 text-primary-700 dark:text-text-dark_tertiary text-xs font-medium rounded-full">
                             {job.category}
                           </span>
                           <span className="px-3 py-1 bg-gray-100 dark:bg-hover-dark text-gray-700 dark:text-text-dark_secondary text-xs font-medium rounded-full capitalize">

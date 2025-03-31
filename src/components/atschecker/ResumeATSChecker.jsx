@@ -14,8 +14,10 @@ import {
   Award,
   CheckCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ResumeATSChecker = () => {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -31,6 +33,13 @@ const ResumeATSChecker = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [cloudinaryUrl, setCloudinaryUrl] = useState("");
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) {
+      navigate("/");
+    }
+  }, []);
 
   // Store the Cloudinary URL in a ref to access it across steps
   const cloudinaryUrlRef = useRef("");
@@ -509,7 +518,7 @@ const ResumeATSChecker = () => {
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center py-12 px-4">
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl mt-10">
         <h1 className="text-3xl font-bold text-center text-text-primary dark:text-text-dark_primary mb-2">
           Resume ATS Score Checker
         </h1>
