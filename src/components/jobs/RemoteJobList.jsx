@@ -136,7 +136,7 @@ const RemoteJobList = () => {
       {/* Hero section */}
       <div className="max-w-6xl mx-auto">
         <div className="bg-white dark:bg-background-dark rounded-lg p-6">
-          <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-20">
+          <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-16">
             Find Your Perfect Remote Opportunity
           </h2>
           <p className="text-sm md:text-base text-text-secondary dark:text-text-dark_secondary mb-4">
