@@ -50,7 +50,7 @@ const CompleteProfilePage = () => {
     },
   };
 
-  const [profileCompletion, setProfileCompletion] = useState(46);
+  const [profileCompletion, setProfileCompletion] = useState(0);
   const [missingDetails, setMissingDetails] = useState([]);
 
   const [mainData, setMainData] = useState({

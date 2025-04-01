@@ -64,7 +64,7 @@ const ResumeATSChecker = () => {
   useEffect(() => {
     if (score !== null && displayScore < score) {
       const startTime = performance.now();
-      const duration = 3500; // 3.5 seconds animation
+      const duration = 2500; // 2.5 seconds animation
       const startValue = 0;
       const changeInValue = score - startValue;
 
@@ -371,7 +371,7 @@ const ResumeATSChecker = () => {
         updateVisibleSteps(step);
 
         // Generate random delay between 400ms and 1200ms
-        const randomDelay = Math.floor(Math.random() * 800) + 400;
+        const randomDelay = Math.floor(Math.random() * 2400) + 1200;
 
         // On the first step, upload to Cloudinary
         if (step === 0) {
