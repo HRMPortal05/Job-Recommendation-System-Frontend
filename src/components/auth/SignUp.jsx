@@ -18,7 +18,7 @@ const SignUp = ({ onClose, onLoginClick }) => {
     resumeUrl: "",
     password: "",
     confirmPassword: "",
-    role: "COMPANY",
+    role: "EMPLOYEE",
   });
 
   const [errors, setErrors] = useState({});
