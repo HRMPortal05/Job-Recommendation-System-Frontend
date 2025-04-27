@@ -198,7 +198,7 @@ const ApplyNowModal = ({ job, isVisible, onClose, formConfig }) => {
   // Helper function to determine input className based on validation state
   const getInputClassName = (fieldName) => {
     const baseClass =
-      "w-full p-3 border rounded-lg bg-white dark:bg-hover-dark border-border-DEFAULT dark:border-border-dark text-text-primary dark:text-text-dark_primary focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark focus:border-transparent";
+      "w-full p-3 border h-14 max-h-40 rounded-lg bg-white dark:bg-hover-dark border-border-DEFAULT dark:border-border-dark text-text-primary dark:text-text-dark_primary focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark focus:border-transparent";
     return validationErrors[fieldName]
       ? `${baseClass} border-red-500 dark:border-red-500`
       : baseClass;

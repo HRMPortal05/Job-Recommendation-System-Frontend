@@ -287,7 +287,7 @@ const JobApplicationsPage = () => {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark p-4 md:p-8">
-      <div className="max-w-6xl mx-auto mt-14">
+      <div className="max-w-6xl mx-auto mt-20 md:mt-14 lg:mt-14">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-dark_primary mb-8">
           Your Job Applications
         </h1>

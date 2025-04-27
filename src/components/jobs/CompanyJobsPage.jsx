@@ -362,10 +362,13 @@ const CompanyJobsPage = () => {
           </h3>
           <button
             onClick={() => handleDownloadExcel(jobId)}
-            className="inline-flex items-center px-4 py-2 bg-primary dark:bg-primary-dark text-white rounded-md hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors font-medium"
+            className="inline-flex items-center px-4 py-2 bg-primary dark:bg-primary-dark text-white rounded-md hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors font-medium text-sm sm:text-base"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download Applications Excel
+            <span className="hidden md:inline lg:inline">
+              Download Applications Excel
+            </span>
+            <span className="inline xs:hidden">Download</span>
           </button>
         </div>
 

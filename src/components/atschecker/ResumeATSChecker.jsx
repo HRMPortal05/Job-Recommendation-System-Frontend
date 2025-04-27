@@ -23,7 +23,7 @@ const ResumeATSChecker = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [currentThinkingStep, setCurrentThinkingStep] = useState(-1);
-  const [score, setScore] = useState(null);
+  const [score, setScore] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
   const [suggestions, setSuggestions] = useState({});
   const [visibleSteps, setVisibleSteps] = useState([]);
@@ -33,6 +33,7 @@ const ResumeATSChecker = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [cloudinaryUrl, setCloudinaryUrl] = useState("");
+  const [backendResponseReceived, setBackendResponseReceived] = useState(false);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -44,6 +45,9 @@ const ResumeATSChecker = () => {
   // Store the Cloudinary URL in a ref to access it across steps
   const cloudinaryUrlRef = useRef("");
 
+  // Store the API response data in a ref
+  const apiResponseRef = useRef(null);
+
   // Animation refs
   const scoreAnimationRef = useRef(null);
 
@@ -52,10 +56,10 @@ const ResumeATSChecker = () => {
     "Scanning document structure...",
     "Analyzing resume format...",
     "Extracting key skills and experiences...",
-    "Comparing with industry standards...",
-    "Evaluating keyword optimization...",
+    // "Comparing with industry standards...",
+    // "Evaluating keyword optimization...",
     "Checking for action verbs and metrics...",
-    "Assessing overall ATS compatibility...",
+    // "Assessing overall ATS compatibility...",
     "Generating personalized suggestions...",
     "Calculating final score...",
   ];
@@ -305,6 +309,12 @@ const ResumeATSChecker = () => {
         }
       );
 
+      // Set the backend response received flag to true
+      setBackendResponseReceived(true);
+
+      // Store the response data in the ref for access in the animation steps
+      apiResponseRef.current = response.data;
+
       return response.data;
     } catch (error) {
       console.error("Error analyzing resume:", error);
@@ -314,32 +324,29 @@ const ResumeATSChecker = () => {
 
   // Delete file from Cloudinary after processing
   const deleteFromCloudinary = async (url) => {
-    try {
-      // Extract public ID from the URL
-      const urlParts = url.split("/");
-      const publicIdWithExtension = urlParts[urlParts.length - 1];
-      const publicId = publicIdWithExtension.split(".")[0];
-
-      // Use Basic Auth (Convert API_SECRET to Base64)
-      const authHeader = `Basic ${btoa(
-        `${import.meta.env.VITE_CLOUDINARY_API_KEY}:${
-          import.meta.env.VITE_CLOUDINARY_API_SECRET
-        }`
-      )}`;
-
-      // Cloudinary API Endpoint for Deletion
-      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${
-        import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-      }/resources/image/upload/${publicId}`;
-
-      // Send DELETE request to Cloudinary
-      await axios.delete(cloudinaryUrl, {
-        params: { public_id: publicId },
-        headers: { Authorization: authHeader },
-      });
-    } catch (error) {
-      console.error("Error deleting file from Cloudinary:", error);
-    }
+    // try {
+    //   // Extract public ID from the URL
+    //   const urlParts = url.split("/");
+    //   const publicIdWithExtension = urlParts[urlParts.length - 1];
+    //   const publicId = publicIdWithExtension.split(".")[0];
+    //   // Use Basic Auth (Convert API_SECRET to Base64)
+    //   const authHeader = `Basic ${btoa(
+    //     `${import.meta.env.VITE_CLOUDINARY_API_KEY}:${
+    //       import.meta.env.VITE_CLOUDINARY_API_SECRET
+    //     }`
+    //   )}`;
+    //   // Cloudinary API Endpoint for Deletion
+    //   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${
+    //     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+    //   }/resources/image/upload/${publicId}`;
+    //   // Send DELETE request to Cloudinary
+    //   await axios.delete(cloudinaryUrl, {
+    //     params: { public_id: publicId },
+    //     headers: { Authorization: authHeader },
+    //   });
+    // } catch (error) {
+    //   console.error("Error deleting file from Cloudinary:", error);
+    // }
   };
 
   const handleSubmit = async (e) => {
@@ -356,9 +363,11 @@ const ResumeATSChecker = () => {
     setShowSuggestions({});
     setUploadProgress(0);
     setIsUploading(true);
+    setBackendResponseReceived(false);
 
-    // Reset the cloudinary URL ref
+    // Reset the cloudinary URL ref and API response ref
     cloudinaryUrlRef.current = "";
+    apiResponseRef.current = null;
 
     let step = -1;
 
@@ -371,13 +380,28 @@ const ResumeATSChecker = () => {
         updateVisibleSteps(step);
 
         // Generate random delay between 400ms and 1200ms
-        const randomDelay = Math.floor(Math.random() * 2400) + 1200;
+        const randomDelay = Math.floor(Math.random() * 1000) + 400;
 
-        // On the first step, upload to Cloudinary
+        // On the first step, upload to Cloudinary and immediately send to backend
         if (step === 0) {
           try {
             const uploadedUrl = await uploadToCloudinary();
-            // Wait a bit to ensure state is updated
+
+            // Immediately fire the API request after upload is complete
+            sendUrlToBackend(uploadedUrl)
+              .then((data) => {
+                // Store the data but continue with animation
+                apiResponseRef.current = data;
+                setBackendResponseReceived(true);
+              })
+              .catch((error) => {
+                console.error("Analysis error:", error);
+                setFileError(error.toString());
+                setIsAnalyzing(false);
+                setIsUploading(false);
+              });
+
+            // Continue with animation steps
             setTimeout(runNextStep, randomDelay);
           } catch (error) {
             console.error("Upload error:", error);
@@ -387,30 +411,63 @@ const ResumeATSChecker = () => {
             return;
           }
         }
-        // On the last step, process with backend
-        else if (step === thinkingSteps.length - 1) {
+        // On step 9 (last step), check if we already have the data
+        else if (
+          step === thinkingSteps.length - 1 ||
+          step === thinkingSteps.length
+        ) {
           try {
-            // Use the ref value instead of the state
-            const url = cloudinaryUrlRef.current;
+            // If we already have the response data, use it
+            if (backendResponseReceived && apiResponseRef.current) {
+              const data = apiResponseRef.current;
 
-            if (!url) {
-              throw new Error("Upload URL not available");
-            }
+              // Try to delete the file from Cloudinary
+              if (cloudinaryUrlRef.current) {
+                await deleteFromCloudinary(cloudinaryUrlRef.current);
+              }
 
-            const data = await sendUrlToBackend(url);
-
-            // Once we have the data, delete the file from Cloudinary
-            await deleteFromCloudinary(url);
-
-            if (data) {
-              setAnalysisData(data);
-              setTimeout(() => {
-                setIsAnalyzing(false);
-                setIsUploading(false);
-                setAnalysisComplete(true);
-              }, 800);
+              if (data) {
+                setAnalysisData(data);
+                setTimeout(() => {
+                  setIsAnalyzing(false);
+                  setIsUploading(false);
+                  setAnalysisComplete(true);
+                }, 800);
+              } else {
+                throw new Error("No data received from backend");
+              }
             } else {
-              throw new Error("No data received from backend");
+              // If we're at the last step but don't have the data yet, wait a bit
+              const checkDataInterval = setInterval(() => {
+                if (backendResponseReceived && apiResponseRef.current) {
+                  clearInterval(checkDataInterval);
+                  const data = apiResponseRef.current;
+
+                  // Try to delete the file from Cloudinary
+                  if (cloudinaryUrlRef.current) {
+                    deleteFromCloudinary(cloudinaryUrlRef.current);
+                  }
+
+                  if (data) {
+                    setAnalysisData(data);
+                    setIsAnalyzing(false);
+                    setIsUploading(false);
+                    setAnalysisComplete(true);
+                  }
+                }
+              }, 500);
+
+              // Set a timeout to clear the interval if it takes too long
+              setTimeout(() => {
+                clearInterval(checkDataInterval);
+                if (!backendResponseReceived) {
+                  setFileError(
+                    "Backend analysis taking longer than expected. Please try again."
+                  );
+                  setIsAnalyzing(false);
+                  setIsUploading(false);
+                }
+              }, 30000); // 30 seconds timeout
             }
           } catch (error) {
             console.error("Analysis error:", error);
@@ -424,7 +481,20 @@ const ResumeATSChecker = () => {
             }
           }
         } else {
-          setTimeout(runNextStep, randomDelay);
+          // For intermediate steps, check if we should proceed to the final step
+          if (backendResponseReceived && apiResponseRef.current && step >= 5) {
+            // If we have data and we're past step 5, speed up to the last step
+            // This will make the animation look more natural while still showing progress
+            setTimeout(() => {
+              step = thinkingSteps.length - 2; // Set to just before the last step
+              setCurrentThinkingStep(step);
+              updateVisibleSteps(step);
+              setTimeout(runNextStep, randomDelay); // Run the last step
+            }, randomDelay);
+          } else {
+            // Normal progression
+            setTimeout(runNextStep, randomDelay);
+          }
         }
       }
     };
@@ -468,6 +538,8 @@ const ResumeATSChecker = () => {
     setUploadProgress(0);
     setCloudinaryUrl("");
     cloudinaryUrlRef.current = "";
+    apiResponseRef.current = null;
+    setBackendResponseReceived(false);
   };
 
   const getScoreColor = (score) => {
