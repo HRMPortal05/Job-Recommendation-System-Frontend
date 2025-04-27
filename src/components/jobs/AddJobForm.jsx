@@ -367,6 +367,8 @@ const AddJobForm = () => {
         }
       );
 
+      console.log("Job created successfully:", finalFormData);
+
       enqueueSnackbar("Job Created successfully!", {
         variant: "success",
         autoHideDuration: 3000,

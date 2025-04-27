@@ -22,6 +22,7 @@ import Login from "../auth/Login";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 import { Link, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 const ThemeSwitcher = ({ currentTheme, onThemeChange }) => {
   const themes = [
@@ -201,16 +202,29 @@ const Navbar = () => {
   const [isLoginMenuOpen, setIsLoginMenuOpen] = useState(false);
   const [isSignUpMenuOpen, setIsSignUpMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userRole, setUserRole] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        const decodedToken = jwtDecode(token);
+        const role = decodedToken.roles;
+
+        setUserRole(role);
+        setIsLoggedIn(true);
+      } else {
+        setUserRole("");
+        setIsLoggedIn(false);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
-    // {
-    //   title: "Home",
-    //   items: [
-    //     { label: "Homepage 1", href: "#" },
-    //     { label: "Homepage 2", href: "#" },
-    //     { label: "Homepage 3", href: "#" },
-    //   ],
-    // },
     {
       title: "Find Jobs",
       items: [
@@ -218,29 +232,31 @@ const Navbar = () => {
         { label: "Remote Job", href: "remote-jobs" },
       ],
     },
-    // {
-    //   title: "Employers",
-    //   items: [
-    //     { label: "All Employers", href: "#" },
-    //     { label: "Employer Details", href: "#" },
-    //     { label: "Post a Job", href: "#" },
-    //   ],
-    // },
     {
       title: "Candidates",
       items: [
         { label: "Browse Candidates", href: "#" },
         { label: "Candidate Profile", href: "#" },
-        { label: "Submit Resume", href: "completeprofile" },
+        ...(userRole === "EMPLOYEE"
+          ? [{ label: "Submit Resume", href: "completeprofile" }]
+          : []),
       ],
     },
-    {
-      title: "Blog",
-      items: [
-        { label: "Blog Grid", href: "#" },
-        { label: "Blog Details", href: "#" },
-      ],
-    },
+    ...(isLoggedIn
+      ? [
+          {
+            title: "Jobs",
+            items: [
+              ...(userRole === "COMPANY"
+                ? [{ label: "Your Jobs", href: "your_jobs" }]
+                : []),
+              ...(userRole === "COMPANY"
+                ? [{ label: "Your Application", href: "your_applications" }]
+                : []),
+            ],
+          },
+        ]
+      : []),
     {
       title: "Pages",
       items: [
@@ -393,13 +409,15 @@ const Navbar = () => {
                   <span>Login</span>
                 </button>
               )}
-              <button
-                onClick={() => navigate("/postjob")}
-                className="hidden md:flex items-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-all duration-200 hover:shadow-lg"
-              >
-                <UserPlus className="h-4 w-4" />
-                <span>Post Job</span>
-              </button>
+              {userRole === "COMPANY" && (
+                <button
+                  onClick={() => navigate("/postjob")}
+                  className="hidden md:flex items-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-all duration-200 hover:shadow-lg"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Post Job</span>
+                </button>
+              )}
 
               <ThemeSwitcher currentTheme={theme} onThemeChange={setTheme} />
 
@@ -456,13 +474,15 @@ const Navbar = () => {
                     <span>Login</span>
                   </button>
                 )}
-                <button
-                  onClick={() => navigate("/postjob")}
-                  className="w-full flex items-center justify-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  <span>Post Job</span>
-                </button>
+                {userRole === "COMPANY" && (
+                  <button
+                    onClick={() => navigate("/postjob")}
+                    className="w-full flex items-center justify-center space-x-2 bg-primary dark:bg-primary-dark text-white px-4 py-2 rounded-lg hover:bg-primary-hover dark:hover:bg-primary-dark_hover transition-colors"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    <span>Post Job</span>
+                  </button>
+                )}
               </div>
             </div>
           )}

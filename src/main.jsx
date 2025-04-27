@@ -13,6 +13,8 @@ import AddJobForm from "./components/jobs/AddJobForm.jsx";
 import CompleteProfilePage from "./components/userprofile/CompleteProfilePage.jsx";
 import RemoteJobList from "./components/jobs/RemoteJobList.jsx";
 import ResumeATSChecker from "./components/atschecker/ResumeATSChecker.jsx";
+import CompanyJobsPage from "./components/jobs/CompanyJobsPage.jsx";
+import JobApplicationsPage from "./components/jobs/JobApplicationsPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -32,6 +34,8 @@ const router = createBrowserRouter([
       { path: "postjob", element: <AddJobForm /> },
       { path: "remote-jobs", element: <RemoteJobList /> },
       { path: "ats-score", element: <ResumeATSChecker /> },
+      { path: "your_jobs", element: <CompanyJobsPage /> },
+      { path: "your_applications", element: <JobApplicationsPage /> },
     ],
   },
   {

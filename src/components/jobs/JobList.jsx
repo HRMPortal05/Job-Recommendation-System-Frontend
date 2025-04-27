@@ -606,7 +606,7 @@ const JobList = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background-DEFAULT dark:bg-background-darker">
+    <div className="min-h-screen bg-background dark:bg-background-dark">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="bg-white dark:bg-background-dark rounded-lg shadow-sm p-4 md:p-6 mb-6 mt-10">
           <div className="mb-6">
