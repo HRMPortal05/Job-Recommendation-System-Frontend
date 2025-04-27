@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import ApplyNowModal from "./ApplyNowModal";
 
 const formatJobDescription = (description) => {
   // Replace escaped HTML entities
@@ -54,124 +55,156 @@ const formatJobDescription = (description) => {
   return formattedDesc;
 };
 
-const JobDetailView = ({ job, isVisible, onClose }) => (
-  <div
-    className={`fixed md:relative inset-0 w-full md:inset-auto z-50 md:z-0 ${
-      isVisible ? "block" : "hidden md:block"
-    }`}
-  >
-    <div className="flex-1 h-full md:h-auto overflow-y-auto bg-white dark:bg-background-dark p-4 md:p-6 md:rounded-lg shadow-sm">
-      <div className="md:hidden flex justify-end mb-4">
-        <button onClick={onClose} className="p-2">
-          <X className="w-6 h-6 text-text-primary dark:text-text-dark_primary" />
-        </button>
-      </div>
+const JobDetailView = ({ job, isVisible, onClose }) => {
+  const [showApplyModal, setShowApplyModal] = useState(false);
 
-      <div className="flex-1 bg-white dark:bg-background-dark p-6 rounded-lg shadow-sm">
-        <div className="max-w-3xl">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold text-text-primary dark:text-text-dark_primary">
-                {job.title}
-              </h1>
-              <div className="flex items-center mt-2">
-                <span className="text-primary dark:text-primary-dark">
-                  {job.companyName}
-                </span>
-                <span className="mx-2 text-text-tertiary dark:text-text-dark_tertiary">
-                  •
-                </span>
-                <span className="flex items-center text-text-secondary dark:text-text-dark_secondary">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {`${job.city} ${job.state}`}
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button className="p-2 rounded-lg border border-border-DEFAULT hover:bg-hover-DEFAULT dark:border-border-dark dark:hover:bg-hover-dark">
-                <Bookmark className="w-5 h-5 text-text-primary dark:text-text-dark_primary" />
-              </button>
-              <button className="p-2 rounded-lg border border-border-DEFAULT hover:bg-hover-DEFAULT dark:border-border-dark dark:hover:bg-hover-dark">
-                <ExternalLink className="w-5 h-5 text-text-primary dark:text-text-dark_primary" />
-              </button>
-            </div>
-          </div>
+  const variableFormConfig = {
+    askCareerGoals: job.askCareerGoals,
+    askExperience: job.askYearsExperience,
+    askCertifications: job.askCertifications,
+    askLearningGoal: job.askLearningGoal,
+    askProblemSolving: job.askProblemSolving,
+    askProjects: job.askProjects,
+    askTeamworkExperience: job.askTeamworkExperience,
+    askGitHub: job.askGitHub,
+    askOpenSourceContribution: job.askOpenSourceContribution,
+    askRemoteSetup: job.askRemoteSetup,
+    askRoleInterest: job.askRoleInterest,
+    askSalaryExpectation: job.askSalaryExpectation,
+    askTechStack: job.askTechStack,
+  };
 
-          <button
-            onClick={() => window.open(job.companyUrl, "_blank")}
-            className="mt-6 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white px-6 py-3 rounded-lg"
-          >
-            Apply now
+  const handleApplyNow = () => {
+    setShowApplyModal(true);
+  };
+
+  return (
+    <div
+      className={`fixed md:relative inset-0 w-full md:inset-auto z-50 md:z-0 ${
+        isVisible ? "block" : "hidden md:block"
+      }`}
+    >
+      <div className="flex-1 h-full md:h-auto overflow-y-auto bg-white dark:bg-background-dark p-4 md:p-6 md:rounded-lg shadow-sm">
+        <div className="md:hidden flex justify-end mb-4">
+          <button onClick={onClose} className="p-2">
+            <X className="w-6 h-6 text-text-primary dark:text-text-dark_primary" />
           </button>
+        </div>
 
-          <div className="mt-8 space-y-6">
-            <section>
-              <h2 className="text-lg font-semibold mb-2 text-text-primary dark:text-text-dark_primary">
-                Job details
-              </h2>
-              <div className="bg-surface-100 dark:bg-hover-dark p-4 rounded-lg">
-                <span className="text-text-tertiary dark:text-text-dark_tertiary">
-                  Job type
-                </span>
-                {job.jobType && (
-                  <div className="font-medium mt-1 text-text-primary dark:text-text-dark_primary">
-                    {job.jobType}
-                  </div>
-                )}
+        <div className="flex-1 bg-white dark:bg-background-dark p-6 rounded-lg shadow-sm">
+          <div className="max-w-3xl">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-2xl font-bold text-text-primary dark:text-text-dark_primary">
+                  {job.title}
+                </h1>
+                <div className="flex items-center mt-2">
+                  <span className="text-primary dark:text-primary-dark">
+                    {job.companyName}
+                  </span>
+                  <span className="mx-2 text-text-tertiary dark:text-text-dark_tertiary">
+                    •
+                  </span>
+                  <span className="flex items-center text-text-secondary dark:text-text-dark_secondary">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {`${job.city} ${job.state}`}
+                  </span>
+                </div>
               </div>
-            </section>
+              <div className="flex gap-2">
+                <button className="p-2 rounded-lg border border-border-DEFAULT hover:bg-hover-DEFAULT dark:border-border-dark dark:hover:bg-hover-dark">
+                  <Bookmark className="w-5 h-5 text-text-primary dark:text-text-dark_primary" />
+                </button>
+                <button className="p-2 rounded-lg border border-border-DEFAULT hover:bg-hover-DEFAULT dark:border-border-dark dark:hover:bg-hover-dark">
+                  <ExternalLink className="w-5 h-5 text-text-primary dark:text-text-dark_primary" />
+                </button>
+              </div>
+            </div>
 
-            {job.benefits && (
+            <button
+              onClick={handleApplyNow}
+              className="mt-6 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white px-6 py-3 rounded-lg"
+            >
+              Apply now
+            </button>
+
+            <div className="mt-8 space-y-6">
               <section>
                 <h2 className="text-lg font-semibold mb-2 text-text-primary dark:text-text-dark_primary">
-                  Benefits
+                  Job details
                 </h2>
                 <div className="bg-surface-100 dark:bg-hover-dark p-4 rounded-lg">
-                  <ul className="space-y-2">
-                    {job.benefits.map((benefit, index) => (
-                      <li
-                        key={index}
-                        className="text-text-tertiary dark:text-text-dark_tertiary"
-                      >
-                        {benefit}
-                      </li>
-                    ))}
-                  </ul>
+                  <span className="text-text-tertiary dark:text-text-dark_tertiary">
+                    Job type
+                  </span>
+                  {job.jobType && (
+                    <div className="font-medium mt-1 text-text-primary dark:text-text-dark_primary">
+                      {job.jobType}
+                    </div>
+                  )}
                 </div>
               </section>
-            )}
 
-            <section>
-              <h2 className="text-lg font-semibold mb-2 text-text-primary dark:text-text-dark_primary">
-                Full job description
-              </h2>
-              <div className="bg-surface-100 dark:bg-hover-dark p-4 rounded-lg">
-                {job.aboutCompany && (
-                  <>
-                    <h3 className="font-medium mb-2 text-text-primary dark:text-text-dark_primary">
-                      About {job.company}
-                    </h3>
-                    <p className="mb-4 text-text-tertiary dark:text-text-dark_tertiary">
-                      {job.aboutCompany}
-                    </p>
-                  </>
-                )}
-                <div className="text-text-tertiary dark:text-text-dark_tertiary">
-                  <div
-                    className="prose max-w-none text-text-primary dark:text-text-dark_primary"
-                    dangerouslySetInnerHTML={{
-                      __html: formatJobDescription(job.description),
-                    }}
-                  />
+              {job.benefits && (
+                <section>
+                  <h2 className="text-lg font-semibold mb-2 text-text-primary dark:text-text-dark_primary">
+                    Benefits
+                  </h2>
+                  <div className="bg-surface-100 dark:bg-hover-dark p-4 rounded-lg">
+                    <ul className="space-y-2">
+                      {job.benefits.map((benefit, index) => (
+                        <li
+                          key={index}
+                          className="text-text-tertiary dark:text-text-dark_tertiary"
+                        >
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </section>
+              )}
+
+              <section>
+                <h2 className="text-lg font-semibold mb-2 text-text-primary dark:text-text-dark_primary">
+                  Full job description
+                </h2>
+                <div className="bg-surface-100 dark:bg-hover-dark p-4 rounded-lg">
+                  {job.aboutCompany && (
+                    <>
+                      <h3 className="font-medium mb-2 text-text-primary dark:text-text-dark_primary">
+                        About {job.company}
+                      </h3>
+                      <p className="mb-4 text-text-tertiary dark:text-text-dark_tertiary">
+                        {job.aboutCompany}
+                      </p>
+                    </>
+                  )}
+                  <div className="text-text-tertiary dark:text-text-dark_tertiary">
+                    <div
+                      className="prose max-w-none text-text-primary dark:text-text-dark_primary"
+                      dangerouslySetInnerHTML={{
+                        __html: formatJobDescription(job.description),
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Apply Now Modal */}
+      <ApplyNowModal
+        job={job}
+        isVisible={showApplyModal}
+        formConfig={variableFormConfig}
+        onClose={() => setShowApplyModal(false)}
+      />
     </div>
-  </div>
-);
+  );
+};
 
 const JobCard = ({ job, isSelected, onClick }) => (
   <div
@@ -498,6 +531,7 @@ const JobList = () => {
       );
 
       const fetchedJobs = response.data;
+      console.log("Fetched jobs:", fetchedJobs);
       setJobs(fetchedJobs);
 
       // Set the first job as selected if jobs exist
