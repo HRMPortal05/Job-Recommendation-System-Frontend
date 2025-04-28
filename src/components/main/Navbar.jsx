@@ -250,7 +250,7 @@ const Navbar = () => {
               ...(userRole === "COMPANY"
                 ? [{ label: "Your Jobs", href: "your_jobs" }]
                 : []),
-              ...(userRole === "COMPANY"
+              ...(userRole === "EMPLOYEE"
                 ? [{ label: "Your Application", href: "your_applications" }]
                 : []),
             ],
