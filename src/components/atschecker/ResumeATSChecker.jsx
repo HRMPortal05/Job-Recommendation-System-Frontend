@@ -42,33 +42,26 @@ const ResumeATSChecker = () => {
     }
   }, []);
 
-  // Store the Cloudinary URL in a ref to access it across steps
   const cloudinaryUrlRef = useRef("");
-
-  // Store the API response data in a ref
   const apiResponseRef = useRef(null);
-
-  // Animation refs
   const scoreAnimationRef = useRef(null);
+  const animationTimeoutRef = useRef(null);
+  const stepIntervalRef = useRef(null);
 
   const thinkingSteps = [
     "Uploading resume to secure storage...",
     "Scanning document structure...",
     "Analyzing resume format...",
     "Extracting key skills and experiences...",
-    // "Comparing with industry standards...",
-    // "Evaluating keyword optimization...",
     "Checking for action verbs and metrics...",
-    // "Assessing overall ATS compatibility...",
     "Generating personalized suggestions...",
     "Calculating final score...",
   ];
 
-  // Improved score animation using requestAnimationFrame for smoother transitions
   useEffect(() => {
     if (score !== null && displayScore < score) {
       const startTime = performance.now();
-      const duration = 2500; // 2.5 seconds animation
+      const duration = 2500;
       const startValue = 0;
       const changeInValue = score - startValue;
 
@@ -76,13 +69,11 @@ const ResumeATSChecker = () => {
         const elapsedTime = currentTime - startTime;
 
         if (elapsedTime < duration) {
-          // Easing function for smooth deceleration
-          const progress = 1 - Math.pow(1 - elapsedTime / duration, 3); // Cubic ease-out
+          const progress = 1 - Math.pow(1 - elapsedTime / duration, 3);
           const newValue = Math.round(startValue + changeInValue * progress);
           setDisplayScore(newValue);
           scoreAnimationRef.current = requestAnimationFrame(animateScore);
         } else {
-          // Ensure we end exactly at the target value
           setDisplayScore(score);
         }
       };
@@ -97,65 +88,61 @@ const ResumeATSChecker = () => {
     }
   }, [score]);
 
-  // Process API response data into a format suitable for the UI
   useEffect(() => {
     if (analysisData) {
-      // Set the overall score
       setScore(analysisData.ATS_Score);
-
-      // Set overall recommendations
       setOverallRecommendations(analysisData.Overall_Recommendations || []);
 
-      // Map API data to our UI format with complete categories from the backend response
       const mappedSuggestions = {
         format: {
           title: "Format & Structure",
           icon: Layout,
-          score: analysisData.Formatting.Score,
-          description: analysisData.Formatting.Description,
-          suggestions: analysisData.Formatting.Recommendations,
+          score: analysisData.Formatting?.Score || 0,
+          description: analysisData.Formatting?.Description || "",
+          suggestions: analysisData.Formatting?.Recommendations || [],
         },
         keywords: {
           title: "Keyword Optimization",
           icon: BrainCircuit,
-          score: analysisData.Keyword_Optimization.Score,
-          description: analysisData.Keyword_Optimization.Description,
-          suggestions: analysisData.Keyword_Optimization.Recommendations,
+          score: analysisData.Keyword_Optimization?.Score || 0,
+          description: analysisData.Keyword_Optimization?.Description || "",
+          suggestions: analysisData.Keyword_Optimization?.Recommendations || [],
         },
         readability: {
           title: "Readability",
           icon: Eye,
-          score: analysisData.Readability.Score,
-          description: analysisData.Readability.Description,
-          suggestions: analysisData.Readability.Recommendations,
+          score: analysisData.Readability?.Score || 0,
+          description: analysisData.Readability?.Description || "",
+          suggestions: analysisData.Readability?.Recommendations || [],
         },
         ats_friendliness: {
           title: "ATS Friendliness",
           icon: CheckCircle,
-          score: analysisData.ATS_Friendliness.Score,
-          description: analysisData.ATS_Friendliness.Description,
-          suggestions: analysisData.ATS_Friendliness.Recommendations,
+          score: analysisData.ATS_Friendliness?.Score || 0,
+          description: analysisData.ATS_Friendliness?.Description || "",
+          suggestions: analysisData.ATS_Friendliness?.Recommendations || [],
         },
         content: {
           title: "Content Quality",
           icon: FileText,
-          score: analysisData.Content_Quality.Score,
-          description: analysisData.Content_Quality.Description,
-          suggestions: analysisData.Content_Quality.Recommendations,
+          score: analysisData.Content_Quality?.Score || 0,
+          description: analysisData.Content_Quality?.Description || "",
+          suggestions: analysisData.Content_Quality?.Recommendations || [],
         },
         design: {
           title: "Design & Impact",
           icon: Award,
-          score: analysisData.Design_and_Impact.Score,
-          description: analysisData.Design_and_Impact.Description,
-          suggestions: analysisData.Design_and_Impact.Recommendations,
+          score: analysisData.Design_and_Impact?.Score || 0,
+          description: analysisData.Design_and_Impact?.Description || "",
+          suggestions: analysisData.Design_and_Impact?.Recommendations || [],
         },
         best_practices: {
           title: "Best Practices",
           icon: Settings,
-          score: analysisData.Best_Practices_Insights.Score,
-          description: analysisData.Best_Practices_Insights.Description,
-          suggestions: analysisData.Best_Practices_Insights.Recommendations,
+          score: analysisData.Best_Practices_Insights?.Score || 0,
+          description: analysisData.Best_Practices_Insights?.Description || "",
+          suggestions:
+            analysisData.Best_Practices_Insights?.Recommendations || [],
         },
       };
 
@@ -163,12 +150,10 @@ const ResumeATSChecker = () => {
     }
   }, [analysisData]);
 
-  // Professional suggestion reveal animation
   useEffect(() => {
     if (analysisComplete && Object.keys(suggestions).length > 0) {
       const categories = Object.keys(suggestions);
 
-      // Stagger the animation of each category
       categories.forEach((category, categoryIndex) => {
         setTimeout(() => {
           setShowSuggestions((prev) => ({
@@ -176,7 +161,6 @@ const ResumeATSChecker = () => {
             [category]: {},
           }));
 
-          // Stagger the animation of each suggestion within the category
           suggestions[category].suggestions.forEach((_, suggestionIndex) => {
             setTimeout(() => {
               setShowSuggestions((prev) => ({
@@ -186,9 +170,9 @@ const ResumeATSChecker = () => {
                   [suggestionIndex]: true,
                 },
               }));
-            }, 300 * suggestionIndex); // 300ms delay between each suggestion
+            }, 300 * suggestionIndex);
           });
-        }, 400 * categoryIndex); // 400ms delay between each category
+        }, 400 * categoryIndex);
       });
     }
   }, [analysisComplete, suggestions]);
@@ -211,7 +195,6 @@ const ResumeATSChecker = () => {
     setFile(selectedFile);
   };
 
-  // Upload file to Cloudinary
   const uploadToCloudinary = () => {
     return new Promise((resolve, reject) => {
       if (!file) {
@@ -220,7 +203,6 @@ const ResumeATSChecker = () => {
       }
 
       try {
-        // Get user ID from token
         const token = localStorage.getItem("token");
         if (!token) {
           reject("Authentication error. Please log in again.");
@@ -234,15 +216,15 @@ const ResumeATSChecker = () => {
           return;
         }
 
-        // Create a filename using the userId
-        const fileName = `resume_${userId}_${Date.now()}`;
-
+        const fileName = `resume_${userId}_${Date.now()}`.replace(
+          /[^a-zA-Z0-9_]/g,
+          "_"
+        );
         const formData = new FormData();
         formData.append("file", file);
         formData.append("upload_preset", "ATS_Score");
         formData.append("public_id", fileName);
 
-        // Set up progress tracking with XHR
         const xhr = new XMLHttpRequest();
         xhr.open(
           "POST",
@@ -263,12 +245,25 @@ const ResumeATSChecker = () => {
 
         xhr.onload = function () {
           if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            // Store the URL in the ref for immediate access
-            cloudinaryUrlRef.current = response.secure_url;
-            // Also update the state for UI updates
-            setCloudinaryUrl(response.secure_url);
-            resolve(response.secure_url);
+            try {
+              const responseText = xhr.responseText.replace(
+                /[\x00-\x1F\x7F-\x9F]/g,
+                ""
+              );
+              const response = JSON.parse(responseText);
+              if (!response.secure_url) {
+                reject("Invalid Cloudinary response: Missing secure_url");
+                return;
+              }
+              cloudinaryUrlRef.current = response.secure_url;
+              setCloudinaryUrl(response.secure_url);
+              resolve(response.secure_url);
+            } catch (parseError) {
+              console.error("Raw Cloudinary response:", xhr.responseText);
+              reject(
+                "Failed to parse Cloudinary response: " + parseError.message
+              );
+            }
           } else {
             reject("Upload failed: " + xhr.statusText);
           }
@@ -285,7 +280,6 @@ const ResumeATSChecker = () => {
     });
   };
 
-  // Send URL to backend for processing
   const sendUrlToBackend = async (pdfUrl) => {
     try {
       const token = localStorage.getItem("token");
@@ -297,7 +291,6 @@ const ResumeATSChecker = () => {
         firebasePdfUrl: pdfUrl,
       };
 
-      // Make the request to your backend
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/resume/ats/check-general`,
         fileUrl,
@@ -309,44 +302,53 @@ const ResumeATSChecker = () => {
         }
       );
 
-      // Set the backend response received flag to true
+      if (!response.data) {
+        throw new Error("Invalid backend response: No data received");
+      }
+
       setBackendResponseReceived(true);
-
-      // Store the response data in the ref for access in the animation steps
       apiResponseRef.current = response.data;
-
       return response.data;
     } catch (error) {
-      console.error("Error analyzing resume:", error);
-      throw new Error("Failed to analyze resume. Please try again.");
+      console.error("Raw backend response:", error.response?.data);
+      throw new Error(
+        "Failed to analyze resume: " + (error.message || "Unknown error")
+      );
     }
   };
 
-  // Delete file from Cloudinary after processing
   const deleteFromCloudinary = async (url) => {
-    // try {
-    //   // Extract public ID from the URL
-    //   const urlParts = url.split("/");
-    //   const publicIdWithExtension = urlParts[urlParts.length - 1];
-    //   const publicId = publicIdWithExtension.split(".")[0];
-    //   // Use Basic Auth (Convert API_SECRET to Base64)
-    //   const authHeader = `Basic ${btoa(
-    //     `${import.meta.env.VITE_CLOUDINARY_API_KEY}:${
-    //       import.meta.env.VITE_CLOUDINARY_API_SECRET
-    //     }`
-    //   )}`;
-    //   // Cloudinary API Endpoint for Deletion
-    //   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${
-    //     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-    //   }/resources/image/upload/${publicId}`;
-    //   // Send DELETE request to Cloudinary
-    //   await axios.delete(cloudinaryUrl, {
-    //     params: { public_id: publicId },
-    //     headers: { Authorization: authHeader },
-    //   });
-    // } catch (error) {
-    //   console.error("Error deleting file from Cloudinary:", error);
-    // }
+    // Implementation commented out for safety
+  };
+
+  const completeAnalysis = async () => {
+    try {
+      const data = apiResponseRef.current;
+
+      if (cloudinaryUrlRef.current) {
+        await deleteFromCloudinary(cloudinaryUrlRef.current);
+      }
+
+      if (data) {
+        setAnalysisData(data);
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setIsUploading(false);
+          setAnalysisComplete(true);
+        }, 800);
+      } else {
+        throw new Error("No data received from backend");
+      }
+    } catch (error) {
+      console.error("Analysis error:", error);
+      setFileError(error.message || "Failed to complete analysis");
+      setIsAnalyzing(false);
+      setIsUploading(false);
+
+      if (cloudinaryUrlRef.current) {
+        await deleteFromCloudinary(cloudinaryUrlRef.current);
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -365,161 +367,112 @@ const ResumeATSChecker = () => {
     setIsUploading(true);
     setBackendResponseReceived(false);
 
-    // Reset the cloudinary URL ref and API response ref
     cloudinaryUrlRef.current = "";
     apiResponseRef.current = null;
 
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+    }
+    if (stepIntervalRef.current) {
+      clearInterval(stepIntervalRef.current);
+    }
+
     let step = -1;
+    let animationComplete = false;
 
     const runNextStep = async () => {
-      if (step < thinkingSteps.length - 1) {
+      if (step < thinkingSteps.length - 1 && !animationComplete) {
         step++;
         setCurrentThinkingStep(step);
-
-        // Update visible steps (always show current + 1 before and 1 after if available)
         updateVisibleSteps(step);
 
-        // Generate random delay between 400ms and 1200ms
-        const randomDelay = Math.floor(Math.random() * 1000) + 400;
-
-        // On the first step, upload to Cloudinary and immediately send to backend
         if (step === 0) {
           try {
             const uploadedUrl = await uploadToCloudinary();
-
-            // Immediately fire the API request after upload is complete
             sendUrlToBackend(uploadedUrl)
               .then((data) => {
-                // Store the data but continue with animation
                 apiResponseRef.current = data;
                 setBackendResponseReceived(true);
+                if (step >= 3) {
+                  animationComplete = true;
+                  setTimeout(() => {
+                    setCurrentThinkingStep(thinkingSteps.length - 1);
+                    updateVisibleSteps(thinkingSteps.length - 1);
+                    setTimeout(completeAnalysis, 1000);
+                  }, 800);
+                }
               })
               .catch((error) => {
-                console.error("Analysis error:", error);
-                setFileError(error.toString());
+                setFileError(error.message);
                 setIsAnalyzing(false);
                 setIsUploading(false);
+                animationComplete = true;
               });
 
-            // Continue with animation steps
-            setTimeout(runNextStep, randomDelay);
+            if (!animationComplete) {
+              const randomDelay = Math.floor(Math.random() * 800) + 600;
+              animationTimeoutRef.current = setTimeout(
+                runNextStep,
+                randomDelay
+              );
+            }
           } catch (error) {
-            console.error("Upload error:", error);
-            setFileError(error.toString());
+            setFileError(error.message);
             setIsAnalyzing(false);
             setIsUploading(false);
+            animationComplete = true;
             return;
           }
-        }
-        // On step 9 (last step), check if we already have the data
-        else if (
-          step === thinkingSteps.length - 1 ||
-          step === thinkingSteps.length
-        ) {
-          try {
-            // If we already have the response data, use it
-            if (backendResponseReceived && apiResponseRef.current) {
-              const data = apiResponseRef.current;
+        } else if (step === thinkingSteps.length - 1) {
+          animationComplete = true;
+          if (backendResponseReceived && apiResponseRef.current) {
+            await completeAnalysis();
+          } else {
+            const maxWaitTime = 15000;
+            const startWaitTime = Date.now();
 
-              // Try to delete the file from Cloudinary
-              if (cloudinaryUrlRef.current) {
-                await deleteFromCloudinary(cloudinaryUrlRef.current);
-              }
-
-              if (data) {
-                setAnalysisData(data);
-                setTimeout(() => {
-                  setIsAnalyzing(false);
-                  setIsUploading(false);
-                  setAnalysisComplete(true);
-                }, 800);
-              } else {
-                throw new Error("No data received from backend");
-              }
-            } else {
-              // If we're at the last step but don't have the data yet, wait a bit
-              const checkDataInterval = setInterval(() => {
-                if (backendResponseReceived && apiResponseRef.current) {
-                  clearInterval(checkDataInterval);
-                  const data = apiResponseRef.current;
-
-                  // Try to delete the file from Cloudinary
-                  if (cloudinaryUrlRef.current) {
-                    deleteFromCloudinary(cloudinaryUrlRef.current);
-                  }
-
-                  if (data) {
-                    setAnalysisData(data);
-                    setIsAnalyzing(false);
-                    setIsUploading(false);
-                    setAnalysisComplete(true);
-                  }
-                }
-              }, 500);
-
-              // Set a timeout to clear the interval if it takes too long
-              setTimeout(() => {
+            const checkDataInterval = setInterval(() => {
+              if (backendResponseReceived && apiResponseRef.current) {
                 clearInterval(checkDataInterval);
-                if (!backendResponseReceived) {
-                  setFileError(
-                    "Backend analysis taking longer than expected. Please try again."
-                  );
-                  setIsAnalyzing(false);
-                  setIsUploading(false);
-                }
-              }, 30000); // 30 seconds timeout
-            }
-          } catch (error) {
-            console.error("Analysis error:", error);
-            setFileError(error.toString());
-            setIsAnalyzing(false);
-            setIsUploading(false);
+                completeAnalysis();
+              } else if (Date.now() - startWaitTime > maxWaitTime) {
+                clearInterval(checkDataInterval);
+                setFileError("Analysis timed out. Please try again.");
+                setIsAnalyzing(false);
+                setIsUploading(false);
+              }
+            }, 500);
 
-            // Still try to delete the file even if analysis failed
-            if (cloudinaryUrlRef.current) {
-              await deleteFromCloudinary(cloudinaryUrlRef.current);
-            }
+            stepIntervalRef.current = checkDataInterval;
           }
         } else {
-          // For intermediate steps, check if we should proceed to the final step
-          if (backendResponseReceived && apiResponseRef.current && step >= 5) {
-            // If we have data and we're past step 5, speed up to the last step
-            // This will make the animation look more natural while still showing progress
+          if (backendResponseReceived && apiResponseRef.current && step >= 3) {
+            animationComplete = true;
             setTimeout(() => {
-              step = thinkingSteps.length - 2; // Set to just before the last step
-              setCurrentThinkingStep(step);
-              updateVisibleSteps(step);
-              setTimeout(runNextStep, randomDelay); // Run the last step
-            }, randomDelay);
+              setCurrentThinkingStep(thinkingSteps.length - 1);
+              updateVisibleSteps(thinkingSteps.length - 1);
+              setTimeout(completeAnalysis, 1000);
+            }, 800);
           } else {
-            // Normal progression
-            setTimeout(runNextStep, randomDelay);
+            const randomDelay = Math.floor(Math.random() * 800) + 600;
+            animationTimeoutRef.current = setTimeout(runNextStep, randomDelay);
           }
         }
       }
     };
 
-    // Initial delay before starting
-    setTimeout(runNextStep, 500);
+    animationTimeoutRef.current = setTimeout(runNextStep, 500);
   };
 
-  // Function to update which steps should be visible
   const updateVisibleSteps = (currentStep) => {
     const visibleIndices = [];
-
-    // Add current step
     visibleIndices.push(currentStep);
-
-    // Add one step before (if available)
     if (currentStep > 0) {
       visibleIndices.push(currentStep - 1);
     }
-
-    // Add one step after (if available)
     if (currentStep < thinkingSteps.length - 1) {
       visibleIndices.push(currentStep + 1);
     }
-
     setVisibleSteps(visibleIndices);
   };
 
@@ -540,7 +493,28 @@ const ResumeATSChecker = () => {
     cloudinaryUrlRef.current = "";
     apiResponseRef.current = null;
     setBackendResponseReceived(false);
+
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+    }
+    if (stepIntervalRef.current) {
+      clearInterval(stepIntervalRef.current);
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      if (stepIntervalRef.current) {
+        clearInterval(stepIntervalRef.current);
+      }
+      if (scoreAnimationRef.current) {
+        cancelAnimationFrame(scoreAnimationRef.current);
+      }
+    };
+  }, []);
 
   const getScoreColor = (score) => {
     if (score >= 90) return "text-success-600";
@@ -557,7 +531,6 @@ const ResumeATSChecker = () => {
   };
 
   const getStepStyles = (index) => {
-    // Only show steps that are in our visibleSteps array
     if (!visibleSteps.includes(index)) return "hidden";
 
     const isActive = index === currentThinkingStep;
@@ -810,7 +783,6 @@ const ResumeATSChecker = () => {
               </button>
             </div>
 
-            {/* Overall Recommendations */}
             {overallRecommendations.length > 0 && (
               <div className="bg-white dark:bg-surface-dark rounded-lg shadow-md p-8">
                 <h2 className="text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-6">
@@ -862,7 +834,6 @@ const ResumeATSChecker = () => {
                       </div>
                     </div>
 
-                    {/* Category description */}
                     <p className="text-text-secondary dark:text-text-dark_secondary mb-4 pl-14">
                       {category.description}
                     </p>
