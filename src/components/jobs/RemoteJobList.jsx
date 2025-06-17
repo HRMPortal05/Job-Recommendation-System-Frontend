@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Calendar,
-  MapPin,
   Tag,
   ChevronDown,
   ChevronUp,
   Search,
   Filter,
-  Briefcase,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,93 +14,101 @@ const RemoteJobList = () => {
   const [expandedJobId, setExpandedJobId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [jobsData, setJobsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMorePages, setHasMorePages] = useState(true);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 20;
 
-  // Sample data based on the provided job object structure
-  const jobsData = [
-    {
-      id: 1963367,
-      url: "https://remotive.com/remote-jobs/design/mid-to-senior-ux-ui-designer-1963367",
-      title: "Mid to Senior UX/UI Designer",
-      company_name: "Zemogajobs",
-      company_logo: "https://remotive.com/job/1591692/logo",
-      category: "Design",
-      tags: [
-        "UI/UX",
-        "agile",
-        "product strategy",
-        "research",
-        "responsive",
-        "travel",
-        "digital products",
-      ],
-      job_type: "full_time",
-      publication_date: "2025-01-14T14:50:11",
-      candidate_required_location: "Colombia",
-      salary: "",
-      description:
-        "Zemoga is the groundbreaking and industry-leading design and technology firm that was the first to offer the world's leading brands the amazing talent from Colombia and has been doing so for over 18 years. Our teams are the top 5% of the workforce, and if you can make it here, you can make it anywhere. Zemoga might be the perfect place for you if you're driven by new ideas, international travel, and working directly with the leaders of some of the smartest companies in the world. We are looking for a Senior UX/UI Designer with a good understanding of the end-to-end product design process, well-developed design craft, and strong problem-solving skills.",
-    },
-    {
-      id: 1963368,
-      url: "https://remotive.com/remote-jobs/software-dev/senior-frontend-developer-1963368",
-      title: "Senior Frontend Developer",
-      company_name: "RemoteCo",
-      company_logo: "https://remotive.com/job/1963368/logo",
-      category: "Software Development",
-      tags: ["React", "TypeScript", "Next.js", "UI", "Frontend"],
-      job_type: "full_time",
-      publication_date: "2025-02-20T10:30:00",
-      candidate_required_location: "Worldwide",
-      salary: "$90,000 - $120,000",
-      description:
-        "We are looking for a Senior Frontend Developer to join our growing team. You will be responsible for developing and implementing user interface components using React.js concepts and workflows. You will work with the design team to ensure the technical feasibility of UI/UX designs and optimize application for maximum speed and scalability.",
-    },
-    {
-      id: 1963369,
-      url: "https://remotive.com/remote-jobs/marketing/digital-marketing-specialist-1963369",
-      title: "Digital Marketing Specialist",
-      company_name: "GlobalMarket",
-      company_logo: "https://remotive.com/job/1963369/logo",
-      category: "Marketing",
-      tags: ["SEO", "Content Marketing", "Social Media", "Analytics", "PPC"],
-      job_type: "full_time",
-      publication_date: "2025-03-01T09:15:00",
-      candidate_required_location: "Europe",
-      salary: "€45,000 - €60,000",
-      description:
-        "We are seeking a Digital Marketing Specialist to develop and implement marketing strategies that increase brand awareness, generate leads, and drive website traffic. The ideal candidate will have experience in SEO, content marketing, social media management, and PPC campaigns.",
-    },
-    {
-      id: 1963370,
-      url: "https://remotive.com/remote-jobs/design/product-designer-1963370",
-      title: "Product Designer",
-      company_name: "DesignBox",
-      company_logo: "https://remotive.com/job/1963370/logo",
-      category: "Design",
-      tags: [
-        "UI/UX",
-        "Figma",
-        "Product Design",
-        "Prototyping",
-        "User Research",
-      ],
-      job_type: "contract",
-      publication_date: "2025-02-25T11:45:00",
-      candidate_required_location: "USA, Canada",
-      salary: "$75 - $95 hourly",
-      description:
-        "We're looking for a Product Designer to help us create intuitive and engaging user experiences. You will work closely with product managers and engineers to design solutions that address user needs while meeting business goals. Strong portfolio showcasing end-to-end design process required.",
-    },
+  // Fetch jobs from API
+  const fetchJobs = async (page = 0, size = 1000, append = false) => {
+    try {
+      if (page === 0) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      setError(null);
+
+      // Replace with your actual backend URL
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetch(
+        `${backendUrl}/api/jobs?page=${page}&size=${size}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const newJobs = data.content || [];
+
+      if (append) {
+        setJobsData((prevJobs) => [...prevJobs, ...newJobs]);
+      } else {
+        setJobsData(newJobs);
+      }
+
+      setTotalElements(data.totalElements || 0);
+      setCurrentPage(page);
+      setHasMorePages(page < data.totalPages - 1);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching jobs:", err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchJobs(0, pageSize);
+  }, []);
+
+  // Infinite scroll handler
+  // Replace your current handleScroll function with this improved version:
+
+  const handleScroll = useCallback(() => {
+    // Calculate how close we are to the bottom of the page
+    const scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    const scrollHeight =
+      document.documentElement.scrollHeight || document.body.scrollHeight;
+    const clientHeight =
+      document.documentElement.clientHeight || window.innerHeight;
+
+    // Trigger when user is within 1000px of the bottom
+    const threshold = 200;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - threshold;
+
+    // Only fetch if we're near bottom, not already loading, and have more pages
+    if (isNearBottom && !loadingMore && hasMorePages && !loading) {
+      fetchJobs(currentPage + 1, pageSize, true);
+    }
+  }, [currentPage, loadingMore, hasMorePages, loading]);
+
+  // Add scroll listener
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // Get unique categories from jobs data
+  const categories = [
+    "All",
+    ...new Set(jobsData.map((job) => job.category).filter(Boolean)),
   ];
-
-  const categories = ["All", ...new Set(jobsData.map((job) => job.category))];
 
   // Filter jobs based on search term and category
   const filteredJobs = jobsData.filter((job) => {
     const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchTerm.toLowerCase());
+      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory =
       selectedCategory === "All" || job.category === selectedCategory;
@@ -120,6 +127,7 @@ const RemoteJobList = () => {
 
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -128,23 +136,86 @@ const RemoteJobList = () => {
     });
   };
 
-  // Shutter segments - more segments for a more realistic shutter effect
-  const shutterSegments = 1;
+  // Improved HTML description parsing
+  const parseDescription = (htmlDescription) => {
+    if (!htmlDescription) return "";
+
+    try {
+      // Create a temporary div to parse HTML
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = htmlDescription;
+
+      // Remove tracking images and unwanted elements
+      const unwantedElements = tempDiv.querySelectorAll(
+        'img[src*="track"], img[src*="blank.gif"], script, style, .tracking'
+      );
+      unwantedElements.forEach((el) => el.remove());
+
+      // Clean up empty paragraphs and line breaks
+      const emptyPs = tempDiv.querySelectorAll("p:empty, br + br");
+      emptyPs.forEach((el) => el.remove());
+
+      // Ensure links open in new tab
+      const links = tempDiv.querySelectorAll("a");
+      links.forEach((link) => {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener noreferrer");
+      });
+
+      return tempDiv.innerHTML;
+    } catch (error) {
+      console.error("Error parsing HTML description:", error);
+      return htmlDescription;
+    }
+  };
+
+  // Get plain text from HTML for preview
+  const getPlainTextPreview = (htmlDescription, maxLength = 200) => {
+    if (!htmlDescription) return "";
+
+    try {
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = htmlDescription;
+      const text = tempDiv.textContent || tempDiv.innerText || "";
+
+      return text.length > maxLength
+        ? text.substring(0, maxLength) + "..."
+        : text;
+    } catch (error) {
+      console.error("Error extracting text preview:", error);
+      return htmlDescription.substring(0, maxLength) + "...";
+    }
+  };
+
+  // Parse tags from string
+  const parseTags = (tagsString) => {
+    if (!tagsString) return [];
+    try {
+      return tagsString
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+    } catch (error) {
+      console.error("Error parsing tags:", error);
+      return [];
+    }
+  };
 
   return (
     <div className="bg-background dark:bg-background-dark min-h-screen">
       {/* Hero section */}
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white dark:bg-background-dark rounded-lg p-6">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg p-6 shadow-sm">
           <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-16">
             Find Your Perfect Remote Opportunity
           </h2>
           <p className="text-sm md:text-base text-text-secondary dark:text-text-dark_secondary mb-4">
             Discover roles that match your profile, skills, and experience
           </p>
+
           {/* Enhanced "Based on your profile details" text */}
           <div className="flex items-center mb-8">
-            <div className="w-1 h-6 bg-primary dark:bg-primary-dark rounded-full mr-3"></div>
+            <div className="w-1 h-6 bg-primary rounded-full mr-3"></div>
             <p className="text-lg font-medium text-primary dark:text-primary-dark">
               Personalized recommendations{" "}
               <span className="text-text-secondary dark:text-text-dark_secondary font-normal">
@@ -154,19 +225,16 @@ const RemoteJobList = () => {
           </div>
 
           {/* Enhanced Search bar in hero */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-lg">
+          <div className="bg-surface dark:bg-surface-dark rounded-xl p-5 shadow-lg border border-border dark:border-border-dark">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  <Search
-                    size={18}
-                    className="text-primary dark:text-primary-dark"
-                  />
+                  <Search size={18} className="text-primary" />
                 </div>
                 <input
                   type="text"
                   placeholder="Search jobs by title, company or keyword..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+                  className="w-full pl-10 pr-4 py-3 border border-border-light dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark text-text-primary dark:text-text-dark_primary focus:outline-none focus:ring-2 focus:ring-primary"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -174,13 +242,10 @@ const RemoteJobList = () => {
 
               <div className="relative w-full md:w-64">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  <Filter
-                    size={18}
-                    className="text-primary dark:text-primary-dark"
-                  />
+                  <Filter size={18} className="text-primary" />
                 </div>
                 <select
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 appearance-none focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-dark"
+                  className="w-full pl-10 pr-4 py-3 border border-border-light dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark text-text-primary dark:text-text-dark_primary appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                 >
@@ -191,248 +256,234 @@ const RemoteJobList = () => {
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                  <ChevronDown
-                    size={18}
-                    className="text-gray-400 dark:text-gray-500"
-                  />
+                  <ChevronDown size={18} className="text-text-muted" />
                 </div>
-              </div>
-            </div>
-
-            {/* Added profile-based suggestions */}
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Recommended based on your profile:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-primary-700 dark:text-primary-dark hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-sm transition-colors">
-                  Frontend Development
-                </button>
-                <button className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-primary-700 dark:text-primary-dark hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-sm transition-colors">
-                  React.js
-                </button>
-                <button className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-primary-700 dark:text-primary-dark hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-sm transition-colors">
-                  Full Stack
-                </button>
-                <button className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-primary-700 dark:text-primary-dark hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-sm transition-colors">
-                  Remote (Worldwide)
-                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Updated Stats bar */}
+      {/* Stats bar with loading state */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-sm mb-6 flex flex-wrap justify-between items-center border-l-4 border-primary dark:border-primary-dark">
+        <div className="bg-surface dark:bg-surface-dark p-5 rounded-lg shadow-sm mb-6 flex flex-wrap justify-between items-center border-l-4 border-primary">
           <div>
-            <p className="text-text-secondary dark:text-gray-300 font-medium">
-              <span className="text-primary dark:text-primary-dark font-bold text-lg">
-                {filteredJobs.length}
-              </span>{" "}
-              {filteredJobs.length === 1 ? "job" : "jobs"} found matching your
-              profile
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Based on your education, skills, and past projects
-            </p>
+            {loading ? (
+              <div className="flex items-center">
+                <Loader2 size={20} className="animate-spin text-primary mr-2" />
+                <p className="text-text-secondary dark:text-text-dark_secondary font-medium">
+                  Loading jobs...
+                </p>
+              </div>
+            ) : error ? (
+              <p className="text-red-600 dark:text-red-400 font-medium">
+                Error loading jobs: {error}
+              </p>
+            ) : (
+              <>
+                <p className="text-text-secondary dark:text-text-dark_secondary font-medium">
+                  <span className="text-primary dark:text-primary-dark font-bold text-lg">
+                    {filteredJobs.length}
+                  </span>{" "}
+                  of <span className="font-bold">{totalElements}</span> jobs
+                  found
+                </p>
+                <p className="text-sm text-text-tertiary dark:text-text-dark_tertiary mt-1">
+                  {hasMorePages
+                    ? "Scroll down to load more jobs"
+                    : "All jobs loaded"}
+                </p>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-4 mt-3 md:mt-0">
             <div className="flex items-center">
-              <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="w-3 h-3 rounded-full bg-success mr-2"></div>
+              <span className="text-sm text-text-secondary dark:text-text-dark_secondary">
                 Updated today
-              </span>
-            </div>
-            <div className="hidden md:flex items-center">
-              <Briefcase
-                size={16}
-                className="text-primary dark:text-primary-dark mr-2"
-              />
-              <span className="text-sm text-gray-600 dark:text-gray-300">
-                85% match with your profile
               </span>
             </div>
           </div>
         </div>
 
-        {/* Job listing layout - 2 columns on desktop */}
+        {/* Job listing layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column - Job cards */}
           <div className="lg:col-span-2 space-y-4">
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className="bg-surface dark:bg-background-dark border border-border-DEFAULT dark:border-border-dark rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 size={32} className="animate-spin text-primary" />
+              </div>
+            ) : error ? (
+              <div className="text-center py-12 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                <p className="text-red-600 dark:text-red-400 mb-4">
+                  Failed to load jobs
+                </p>
+                <button
+                  onClick={() => fetchJobs(0, pageSize)}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                 >
+                  Retry
+                </button>
+              </div>
+            ) : filteredJobs.length > 0 ? (
+              <>
+                {filteredJobs.map((job) => (
                   <div
-                    className="p-5 cursor-pointer"
-                    onClick={() => toggleJobExpansion(job.id)}
+                    key={job.jobId}
+                    className="bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gray-100 dark:bg-hover-dark rounded-md flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {job.company_logo ? (
-                          <img
-                            src={
-                              job.company_logo ||
-                              "https://via.placeholder.com/150"
-                            }
-                            alt={`${job.company_name} logo`}
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <span className="text-lg font-bold text-gray-500">
-                            {job.company_name.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex-grow">
-                        <h2 className="text-lg font-semibold text-text-primary dark:text-text-dark_primary">
-                          {job.title}
-                        </h2>
-                        <div className="flex items-center text-text-secondary dark:text-text-dark_secondary text-sm mt-1">
-                          <span>{job.company_name}</span>
-                          <span className="mx-2">•</span>
-                          <span className="flex items-center">
-                            <MapPin size={14} className="mr-1" />
-                            {job.candidate_required_location || "Remote"}
+                    <div
+                      className="p-5 cursor-pointer"
+                      onClick={() => toggleJobExpansion(job.jobId)}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-surface-100 dark:bg-surface-dark rounded-md flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg font-bold text-text-tertiary dark:text-text-dark_tertiary">
+                            {job.company?.charAt(0) || "C"}
                           </span>
                         </div>
 
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900 text-primary-700 dark:text-text-dark_tertiary text-xs font-medium rounded-full">
-                            {job.category}
-                          </span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-hover-dark text-gray-700 dark:text-text-dark_secondary text-xs font-medium rounded-full capitalize">
-                            {job.job_type.replace("_", " ")}
-                          </span>
-                        </div>
-
-                        {job.salary && (
-                          <div className="mt-3 text-success-700 dark:text-success-dark text-sm font-medium">
-                            {job.salary}
+                        <div className="flex-grow">
+                          <h2 className="text-lg font-semibold text-text-primary dark:text-text-dark_primary">
+                            {job.title}
+                          </h2>
+                          <div className="flex items-center text-text-secondary dark:text-text-dark_secondary text-sm mt-1">
+                            <span>{job.company}</span>
+                            {job.category && (
+                              <>
+                                <span className="mx-2">•</span>
+                                <span>{job.category}</span>
+                              </>
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        <div className="flex items-center text-gray-500 dark:text-text-dark_tertiary text-sm">
-                          <Calendar size={14} className="mr-1" />
-                          <span>{formatDate(job.publication_date)}</span>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {job.category && (
+                              <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-full">
+                                {job.category}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-2 text-text-secondary dark:text-text-dark_secondary text-sm">
+                            {getPlainTextPreview(job.description, 120)}
+                          </div>
                         </div>
 
-                        <button className="mt-2 flex items-center text-primary dark:text-primary-dark hover:text-primary-hover dark:hover:text-primary-dark_hover">
-                          <span className="mr-1 text-sm">
-                            {expandedJobId === job.id
-                              ? "Hide details"
-                              : "See details"}
-                          </span>
-                          {expandedJobId === job.id ? (
-                            <ChevronUp size={16} />
-                          ) : (
-                            <ChevronDown size={16} />
-                          )}
-                        </button>
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <div className="flex items-center text-text-tertiary dark:text-text-dark_tertiary text-sm">
+                            <Calendar size={14} className="mr-1" />
+                            <span>{formatDate(job.updatedAt)}</span>
+                          </div>
+
+                          <button className="mt-2 flex items-center text-primary dark:text-primary-dark hover:text-primary-hover dark:hover:text-primary-dark_hover">
+                            <span className="mr-1 text-sm">
+                              {expandedJobId === job.jobId
+                                ? "Hide details"
+                                : "See details"}
+                            </span>
+                            {expandedJobId === job.jobId ? (
+                              <ChevronUp size={16} />
+                            ) : (
+                              <ChevronDown size={16} />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Metal shutter effect for expanded content */}
-                  <AnimatePresence>
-                    {expandedJobId === job.id && (
-                      <div className="relative overflow-hidden">
-                        {/* Shutter segments */}
-                        {[...Array(shutterSegments)].map((_, index) => (
-                          <motion.div
-                            key={`shutter-${index}`}
-                            initial={{
-                              x: 0,
-                              y: -10,
-                              opacity: 0,
-                              height: 0,
-                            }}
-                            animate={{
-                              x: 0,
-                              y: 0,
-                              opacity: 1,
-                              height: "auto",
-                            }}
-                            exit={{
-                              x: 0,
-                              y: -10,
-                              opacity: 0,
-                              height: 0,
-                            }}
-                            transition={{
-                              duration: 0.4,
-                              ease: "easeInOut",
-                              delay: index * 0.05, // Staggered animation
-                            }}
-                            className="border-t border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
-                            style={{
-                              boxShadow: "0 2px 3px rgba(0,0,0,0.1)",
-                              transformOrigin: "top",
-                              height:
-                                index === shutterSegments - 1 ? "auto" : "8px",
-                            }}
-                          >
-                            {/* Shutter segment content - only visible in the last segment */}
-                            {index === shutterSegments - 1 && (
-                              <div className="px-5 py-4">
-                                {/* Description */}
-                                <div className="mb-4">
-                                  <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2">
-                                    Job Description
-                                  </h3>
-                                  <p className="text-text-secondary dark:text-text-dark_secondary text-sm">
-                                    {job.description}
-                                  </p>
-                                </div>
-                                {/* Tags */}
-                                {job.tags && job.tags.length > 0 && (
-                                  <div className="mb-4">
-                                    <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2 flex items-center">
-                                      <Tag size={14} className="mr-2" />
-                                      Skills & Technologies
-                                    </h3>
-                                    <div className="flex flex-wrap gap-2">
-                                      {job.tags.map((tag, index) => (
-                                        <span
-                                          key={index}
-                                          className="px-3 py-1 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-dark text-xs font-medium rounded-full"
-                                        >
-                                          {tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                {/* Apply button */}
-                                <div className="flex justify-end">
-                                  <a
-                                    href={job.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-5 py-2 bg-primary hover:bg-primary-hover dark:bg-primary-dark dark:hover:bg-primary-dark_hover text-white rounded-lg transition-colors duration-200 font-medium"
-                                  >
-                                    Apply Now
-                                  </a>
+                    {/* Expanded content */}
+                    <AnimatePresence>
+                      {expandedJobId === job.jobId && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="border-t border-border dark:border-border-dark bg-surface-50 dark:bg-surface-dark/50 overflow-hidden"
+                        >
+                          <div className="px-5 py-4">
+                            {/* Description with improved HTML formatting */}
+                            <div className="mb-4">
+                              <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2">
+                                Job Description
+                              </h3>
+                              <div
+                                className="text-text-secondary dark:text-text-dark_secondary text-sm prose prose-sm dark:prose-invert max-w-none job-description"
+                                dangerouslySetInnerHTML={{
+                                  __html: parseDescription(job.description),
+                                }}
+                                style={{
+                                  wordBreak: "break-word",
+                                  lineHeight: "1.6",
+                                }}
+                              />
+                            </div>
+
+                            {/* Tags */}
+                            {job.tags && (
+                              <div className="mb-4">
+                                <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2 flex items-center">
+                                  <Tag size={14} className="mr-2" />
+                                  Skills & Technologies
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                  {parseTags(job.tags).map((tag, index) => (
+                                    <span
+                                      key={index}
+                                      className="px-3 py-1 bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs font-medium rounded-full"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
                                 </div>
                               </div>
                             )}
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))
+
+                            {/* Apply button */}
+                            <div className="flex justify-end">
+                              <a
+                                href={job.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-5 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors duration-200 font-medium"
+                              >
+                                Apply Now
+                              </a>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+
+                {/* Loading more indicator */}
+                {loadingMore && (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2
+                      size={24}
+                      className="animate-spin text-primary mr-2"
+                    />
+                    <span className="text-text-secondary dark:text-text-dark_secondary">
+                      Loading more jobs...
+                    </span>
+                  </div>
+                )}
+
+                {/* End of results indicator */}
+                {!hasMorePages && !loadingMore && filteredJobs.length > 0 && (
+                  <div className="text-center py-8 border-t border-border dark:border-border-dark">
+                    <p className="text-text-tertiary dark:text-text-dark_tertiary">
+                      You've reached the end! No more jobs to load.
+                    </p>
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="text-center py-12 border border-gray-200 rounded-lg bg-white dark:bg-surface-dark">
+              <div className="text-center py-12 border border-border dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark">
                 <p className="text-text-secondary dark:text-text-dark_secondary">
                   No jobs found matching your criteria. Try adjusting your
                   search.
@@ -441,39 +492,43 @@ const RemoteJobList = () => {
             )}
           </div>
 
-          {/* Right column - Sidebar */}
+          {/* Right column - Fixed Sidebar */}
           <div className="hidden lg:block">
-            <div className="bg-white dark:bg-background-dark border border-border-DEFAULT dark:border-border-dark rounded-lg p-5 sticky top-4">
-              <h3 className="text-surface-dark dark:text-white font-semibold text-lg mb-4">
+            <div className="bg-surface dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-lg p-5 sticky top-20">
+              <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-4">
                 Popular Job Categories
               </h3>
-              <ul className="space-y-2">
-                {categories.map(
-                  (category) =>
-                    category !== "All" && (
-                      <li key={category}>
-                        <button
-                          className={`w-full text-left px-3 py-2 rounded-md transition ${
-                            selectedCategory === category
-                              ? "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-dark"
-                              : "hover:bg-gray-100 dark:hover:bg-hover-dark text-gray-700 dark:text-gray-300"
-                          }`}
-                          onClick={() => setSelectedCategory(category)}
-                        >
-                          {category}
-                        </button>
-                      </li>
-                    )
-                )}
-              </ul>
 
-              <div className="mt-8 pt-6 border-t border-border-DEFAULT dark:border-border-dark border-gray-200">
-                <h3 className="text-surface-dark dark:text-white font-semibold text-lg mb-4">
+              {/* Scrollable Categories Container */}
+              <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
+                <ul className="space-y-1 pr-2">
+                  {categories.map(
+                    (category) =>
+                      category !== "All" && (
+                        <li key={category}>
+                          <button
+                            className={`w-full text-left px-3 py-2.5 rounded-md transition text-sm ${
+                              selectedCategory === category
+                                ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium"
+                                : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                            }`}
+                            onClick={() => setSelectedCategory(category)}
+                          >
+                            {category}
+                          </button>
+                        </li>
+                      )
+                  )}
+                </ul>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-4">
                   Job Search Tips
                 </h3>
-                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
                   <li className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-dark flex-shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5">
                       <span className="text-xs">1</span>
                     </div>
                     <span>
@@ -481,13 +536,13 @@ const RemoteJobList = () => {
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-dark flex-shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5">
                       <span className="text-xs">2</span>
                     </div>
                     <span>Use specific keywords from the job description</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-dark flex-shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5">
                       <span className="text-xs">3</span>
                     </div>
                     <span>
@@ -503,9 +558,9 @@ const RemoteJobList = () => {
       </div>
 
       {/* Footer */}
-      <div className="bg-white dark:bg-surface-dark border-t border-border-DEFAULT dark:border-border-dark mt-8">
+      <div className="bg-surface dark:bg-surface-dark border-t border-border dark:border-border-dark mt-8">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
+          <div className="text-center text-text-tertiary dark:text-text-dark_tertiary text-sm">
             <p>© 2025 Remote Job Board. All rights reserved.</p>
             <p className="mt-2">
               Find the best remote opportunities worldwide.
