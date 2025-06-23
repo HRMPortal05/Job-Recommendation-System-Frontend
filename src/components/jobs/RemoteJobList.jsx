@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Tag,
@@ -7,8 +7,20 @@ import {
   Search,
   Filter,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { use } from "react";
+
+// In-memory cache for session storage
+const sessionCache = {
+  userProfile: null,
+  jobsData: null,
+  lastFetched: null,
+  cacheExpiry: 10 * 60 * 1000, // 10 minutes
+};
 
 const RemoteJobList = () => {
   const [expandedJobId, setExpandedJobId] = useState(null);
@@ -16,86 +28,159 @@ const RemoteJobList = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [jobsData, setJobsData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMorePages, setHasMorePages] = useState(true);
-  const [totalElements, setTotalElements] = useState(0);
-  const pageSize = 20;
+  const [userProfile, setUserProfile] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [usingCachedData, setUsingCachedData] = useState(false);
 
-  // Fetch jobs from API
-  const fetchJobs = async (page = 0, size = 1000, append = false) => {
+  // Check if cached data is still valid
+  const isCacheValid = () => {
+    if (!sessionCache.lastFetched) return false;
+    return Date.now() - sessionCache.lastFetched < sessionCache.cacheExpiry;
+  };
+
+  // Load data from cache
+  const loadFromCache = () => {
+    if (sessionCache.userProfile && sessionCache.jobsData && isCacheValid()) {
+      setUserProfile(sessionCache.userProfile);
+      setJobsData(sessionCache.jobsData);
+      setUsingCachedData(true);
+      setLoading(false);
+      return true;
+    }
+    return false;
+  };
+
+  // Save data to cache
+  const saveToCache = (userData, jobs) => {
+    sessionCache.userProfile = userData;
+    sessionCache.jobsData = jobs;
+    sessionCache.lastFetched = Date.now();
+  };
+
+  // Clear cache
+  const clearCache = () => {
+    sessionCache.userProfile = null;
+    sessionCache.jobsData = null;
+    sessionCache.lastFetched = null;
+  };
+
+  // Get user ID and token from your auth system
+  const getUserData = () => {
+    // Replace with your actual method to get user ID and token
+    const token = localStorage.getItem("token");
+    const uid = jwtDecode(token).user_id;
+    return { uid, token };
+  };
+
+  // Fetch user career preferences
+  const fetchUserProfile = async () => {
     try {
-      if (page === 0) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-      setError(null);
+      const { uid, token } = getUserData();
 
-      // Replace with your actual backend URL
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const response = await fetch(
-        `${backendUrl}/api/jobs?page=${page}&size=${size}`
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/career-preferences/getByUserId/${uid}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const newJobs = data.content || [];
-
-      if (append) {
-        setJobsData((prevJobs) => [...prevJobs, ...newJobs]);
-      } else {
-        setJobsData(newJobs);
-      }
-
-      setTotalElements(data.totalElements || 0);
-      setCurrentPage(page);
-      setHasMorePages(page < data.totalPages - 1);
+      setUserProfile(response.data);
+      return response.data;
     } catch (err) {
-      setError(err.message);
-      console.error("Error fetching jobs:", err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      console.error("Error fetching user profile:", err);
+      setError("Failed to load user profile");
+      return null;
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    fetchJobs(0, pageSize);
-  }, []);
+  // Fetch job recommendations from transformer API
+  const fetchJobRecommendations = async (userData, isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
 
-  // Infinite scroll handler
-  // Replace your current handleScroll function with this improved version:
+      if (!userData) {
+        throw new Error("Unable to transform user data");
+      }
 
-  const handleScroll = useCallback(() => {
-    // Calculate how close we are to the bottom of the page
-    const scrollTop =
-      document.documentElement.scrollTop || document.body.scrollTop;
-    const scrollHeight =
-      document.documentElement.scrollHeight || document.body.scrollHeight;
-    const clientHeight =
-      document.documentElement.clientHeight || window.innerHeight;
+      const response = await axios.post(
+        "https://recomtransformer.onrender.com/api/recommend",
+        userData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    // Trigger when user is within 1000px of the bottom
-    const threshold = 200;
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - threshold;
-
-    // Only fetch if we're near bottom, not already loading, and have more pages
-    if (isNearBottom && !loadingMore && hasMorePages && !loading) {
-      fetchJobs(currentPage + 1, pageSize, true);
+      if (response.data && response.data.recommendations) {
+        setJobsData(response.data.recommendations);
+        // Save to cache
+        saveToCache(userData, response.data.recommendations);
+        setUsingCachedData(false);
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to fetch job recommendations");
+      console.error("Error fetching job recommendations:", err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
     }
-  }, [currentPage, loadingMore, hasMorePages, loading]);
+  };
 
-  // Add scroll listener
+  // Manual refresh function
+  const handleRefresh = async () => {
+    if (userProfile) {
+      clearCache(); // Clear cache before refresh
+      await fetchJobRecommendations(userProfile, true);
+    }
+  };
+
+  // Initial load with cache check
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    const loadData = async () => {
+      // First, try to load from cache
+      const cacheLoaded = loadFromCache();
+
+      if (cacheLoaded) {
+        // Cache loaded successfully, but still fetch fresh data in background
+        console.log("Loading from cache...");
+
+        // Fetch fresh data in background if user profile exists in cache
+        if (sessionCache.userProfile) {
+          try {
+            const freshUserData = await fetchUserProfile();
+            if (freshUserData) {
+              await fetchJobRecommendations(freshUserData);
+            }
+          } catch (err) {
+            console.log("Background refresh failed, using cached data");
+          }
+        }
+      } else {
+        // No valid cache, fetch fresh data
+        console.log("No valid cache, fetching fresh data...");
+        const userData = await fetchUserProfile();
+        if (userData) {
+          await fetchJobRecommendations(userData);
+        }
+      }
+    };
+
+    loadData();
+  }, []);
 
   // Get unique categories from jobs data
   const categories = [
@@ -187,18 +272,29 @@ const RemoteJobList = () => {
     }
   };
 
-  // Parse tags from string
-  const parseTags = (tagsString) => {
-    if (!tagsString) return [];
-    try {
-      return tagsString
+  // Parse tags from array or string
+  const parseTags = (tags) => {
+    if (!tags) return [];
+
+    if (Array.isArray(tags)) {
+      return tags.flatMap((tagGroup) =>
+        typeof tagGroup === "string"
+          ? tagGroup
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter(Boolean)
+          : []
+      );
+    }
+
+    if (typeof tags === "string") {
+      return tags
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean);
-    } catch (error) {
-      console.error("Error parsing tags:", error);
-      return [];
     }
+
+    return [];
   };
 
   return (
@@ -206,20 +302,52 @@ const RemoteJobList = () => {
       {/* Hero section */}
       <div className="max-w-6xl mx-auto px-4">
         <div className="bg-surface dark:bg-surface-dark rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-16">
-            Find Your Perfect Remote Opportunity
-          </h2>
-          <p className="text-sm md:text-base text-text-secondary dark:text-text-dark_secondary mb-4">
-            Discover roles that match your profile, skills, and experience
-          </p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-text-primary dark:text-text-dark_primary mb-2 mt-16">
+                Find Your Perfect Remote Opportunity
+              </h2>
+              <p className="text-sm md:text-base text-text-secondary dark:text-text-dark_secondary mb-4">
+                Discover roles that match your profile, skills, and experience
+              </p>
+            </div>
+
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="mt-16 flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+            >
+              <RefreshCw
+                size={16}
+                className={isRefreshing ? "animate-spin" : ""}
+              />
+              {isRefreshing ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
+
+          {/* Cache Status Indicator */}
+          {usingCachedData && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center text-blue-700 dark:text-blue-300 text-sm">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                <span>
+                  Showing cached recommendations • Fresh data loading in
+                  background
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Enhanced "Based on your profile details" text */}
           <div className="flex items-center mb-8">
             <div className="w-1 h-6 bg-primary rounded-full mr-3"></div>
             <p className="text-lg font-medium text-primary dark:text-primary-dark">
-              Personalized recommendations{" "}
+              AI-powered recommendations{" "}
               <span className="text-text-secondary dark:text-text-dark_secondary font-normal">
-                based on your profile
+                {userProfile
+                  ? `for ${userProfile.users.firstName}`
+                  : "based on your profile"}
               </span>
             </p>
           </div>
@@ -268,16 +396,16 @@ const RemoteJobList = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-surface dark:bg-surface-dark p-5 rounded-lg shadow-sm mb-6 flex flex-wrap justify-between items-center border-l-4 border-primary">
           <div>
-            {loading ? (
+            {loading && !usingCachedData ? (
               <div className="flex items-center">
                 <Loader2 size={20} className="animate-spin text-primary mr-2" />
                 <p className="text-text-secondary dark:text-text-dark_secondary font-medium">
-                  Loading jobs...
+                  Getting your personalized recommendations...
                 </p>
               </div>
-            ) : error ? (
+            ) : error && !usingCachedData ? (
               <p className="text-red-600 dark:text-red-400 font-medium">
-                Error loading jobs: {error}
+                Error: {error}
               </p>
             ) : (
               <>
@@ -285,14 +413,22 @@ const RemoteJobList = () => {
                   <span className="text-primary dark:text-primary-dark font-bold text-lg">
                     {filteredJobs.length}
                   </span>{" "}
-                  of <span className="font-bold">{totalElements}</span> jobs
-                  found
+                  personalized job recommendations found
+                  {usingCachedData && (
+                    <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                      Cached
+                    </span>
+                  )}
                 </p>
                 <p className="text-sm text-text-tertiary dark:text-text-dark_tertiary mt-1">
-                  {hasMorePages
-                    ? "Scroll down to load more jobs"
-                    : "All jobs loaded"}
+                  Matched based on your skills: {userProfile?.keySkills}
                 </p>
+                {sessionCache.lastFetched && (
+                  <p className="text-xs text-text-tertiary dark:text-text-dark_tertiary mt-1">
+                    Last updated:{" "}
+                    {new Date(sessionCache.lastFetched).toLocaleTimeString()}
+                  </p>
+                )}
               </>
             )}
           </div>
@@ -301,9 +437,15 @@ const RemoteJobList = () => {
             <div className="flex items-center">
               <div className="w-3 h-3 rounded-full bg-success mr-2"></div>
               <span className="text-sm text-text-secondary dark:text-text-dark_secondary">
-                Updated today
+                AI Powered
               </span>
             </div>
+            {isRefreshing && (
+              <div className="flex items-center">
+                <Loader2 size={16} className="animate-spin text-primary mr-2" />
+                <span className="text-sm text-primary">Updating...</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -311,17 +453,17 @@ const RemoteJobList = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column - Job cards */}
           <div className="lg:col-span-2 space-y-4">
-            {loading ? (
+            {loading && !usingCachedData ? (
               <div className="flex justify-center items-center py-12">
-                <Loader2 size={32} className="animate-spin text-primary" />
+                <Loader2 size={32} className="animate-spin text-blue-600" />
               </div>
-            ) : error ? (
+            ) : error && !usingCachedData ? (
               <div className="text-center py-12 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
                 <p className="text-red-600 dark:text-red-400 mb-4">
-                  Failed to load jobs
+                  Failed to load recommendations
                 </p>
                 <button
-                  onClick={() => fetchJobs(0, pageSize)}
+                  onClick={handleRefresh}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                 >
                   Retry
@@ -331,25 +473,25 @@ const RemoteJobList = () => {
               <>
                 {filteredJobs.map((job) => (
                   <div
-                    key={job.jobId}
+                    key={job.job_id}
                     className="bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
                   >
                     <div
                       className="p-5 cursor-pointer"
-                      onClick={() => toggleJobExpansion(job.jobId)}
+                      onClick={() => toggleJobExpansion(job.job_id)}
                     >
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-surface-100 dark:bg-surface-dark rounded-md flex items-center justify-center flex-shrink-0">
-                          <span className="text-lg font-bold text-text-tertiary dark:text-text-dark_tertiary">
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg font-bold text-gray-500 dark:text-gray-400">
                             {job.company?.charAt(0) || "C"}
                           </span>
                         </div>
 
                         <div className="flex-grow">
-                          <h2 className="text-lg font-semibold text-text-primary dark:text-text-dark_primary">
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {job.title}
                           </h2>
-                          <div className="flex items-center text-text-secondary dark:text-text-dark_secondary text-sm mt-1">
+                          <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm mt-1">
                             <span>{job.company}</span>
                             {job.category && (
                               <>
@@ -359,32 +501,57 @@ const RemoteJobList = () => {
                             )}
                           </div>
 
+                          {/* Match Score Display */}
+                          {job.match_score && (
+                            <div className="mt-2 flex items-center">
+                              <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
+                                {Math.round(job.match_score * 100)}% Match
+                              </span>
+                              {job.rank && (
+                                <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">
+                                  Rank #{job.rank}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
                           <div className="mt-3 flex flex-wrap gap-2">
                             {job.category && (
-                              <span className="px-3 py-1 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-full">
+                              <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">
                                 {job.category}
                               </span>
                             )}
                           </div>
 
-                          <div className="mt-2 text-text-secondary dark:text-text-dark_secondary text-sm">
+                          <div className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
                             {getPlainTextPreview(job.description, 120)}
                           </div>
+
+                          {/* Match explanation */}
+                          {job.explanation && (
+                            <div className="mt-2 text-xs text-gray-500 dark:text-gray-500 italic">
+                              {job.explanation}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                          <div className="flex items-center text-text-tertiary dark:text-text-dark_tertiary text-sm">
+                          <div className="flex items-center text-gray-500 dark:text-gray-500 text-sm">
                             <Calendar size={14} className="mr-1" />
-                            <span>{formatDate(job.updatedAt)}</span>
+                            <span>
+                              {formatDate(job.publication_date)
+                                ? formatDate(job.publication_date)
+                                : "N/A"}
+                            </span>
                           </div>
 
-                          <button className="mt-2 flex items-center text-primary dark:text-primary-dark hover:text-primary-hover dark:hover:text-primary-dark_hover">
+                          <button className="mt-2 flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
                             <span className="mr-1 text-sm">
-                              {expandedJobId === job.jobId
+                              {expandedJobId === job.job_id
                                 ? "Hide details"
                                 : "See details"}
                             </span>
-                            {expandedJobId === job.jobId ? (
+                            {expandedJobId === job.job_id ? (
                               <ChevronUp size={16} />
                             ) : (
                               <ChevronDown size={16} />
@@ -396,22 +563,22 @@ const RemoteJobList = () => {
 
                     {/* Expanded content */}
                     <AnimatePresence>
-                      {expandedJobId === job.jobId && (
+                      {expandedJobId === job.job_id && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.3, ease: "easeInOut" }}
-                          className="border-t border-border dark:border-border-dark bg-surface-50 dark:bg-surface-dark/50 overflow-hidden"
+                          className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 overflow-hidden"
                         >
                           <div className="px-5 py-4">
                             {/* Description with improved HTML formatting */}
                             <div className="mb-4">
-                              <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2">
+                              <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-2">
                                 Job Description
                               </h3>
                               <div
-                                className="text-text-secondary dark:text-text-dark_secondary text-sm prose prose-sm dark:prose-invert max-w-none job-description"
+                                className="text-gray-600 dark:text-gray-400 text-sm prose prose-sm dark:prose-invert max-w-none job-description"
                                 dangerouslySetInnerHTML={{
                                   __html: parseDescription(job.description),
                                 }}
@@ -425,7 +592,7 @@ const RemoteJobList = () => {
                             {/* Tags */}
                             {job.tags && (
                               <div className="mb-4">
-                                <h3 className="text-md font-semibold text-text-primary dark:text-text-dark_primary mb-2 flex items-center">
+                                <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
                                   <Tag size={14} className="mr-2" />
                                   Skills & Technologies
                                 </h3>
@@ -433,7 +600,7 @@ const RemoteJobList = () => {
                                   {parseTags(job.tags).map((tag, index) => (
                                     <span
                                       key={index}
-                                      className="px-3 py-1 bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs font-medium rounded-full"
+                                      className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full"
                                     >
                                       {tag}
                                     </span>
@@ -442,13 +609,67 @@ const RemoteJobList = () => {
                               </div>
                             )}
 
+                            {/* Match Details */}
+                            {job.match_criteria && (
+                              <div className="mb-4">
+                                <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-2">
+                                  Why This Job Matches You
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                  <div className="flex items-center">
+                                    <div
+                                      className={`w-3 h-3 rounded-full mr-2 ${
+                                        job.match_criteria.experience_match
+                                          ? "bg-green-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></div>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                      Experience Match
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div
+                                      className={`w-3 h-3 rounded-full mr-2 ${
+                                        job.match_criteria.location_match
+                                          ? "bg-green-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></div>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                      Location Match
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div
+                                      className={`w-3 h-3 rounded-full mr-2 ${
+                                        job.match_criteria.job_type_match
+                                          ? "bg-green-500"
+                                          : "bg-red-500"
+                                      }`}
+                                    ></div>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                      Job Type Match
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div className="w-3 h-3 rounded-full mr-2 bg-blue-500"></div>
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                      {job.match_criteria.skill_match_percent}%
+                                      Skills Match
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
                             {/* Apply button */}
                             <div className="flex justify-end">
                               <a
-                                href={job.url}
+                                href={job.application_url || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-5 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors duration-200 font-medium"
+                                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium"
                               >
                                 Apply Now
                               </a>
@@ -459,34 +680,12 @@ const RemoteJobList = () => {
                     </AnimatePresence>
                   </div>
                 ))}
-
-                {/* Loading more indicator */}
-                {loadingMore && (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2
-                      size={24}
-                      className="animate-spin text-primary mr-2"
-                    />
-                    <span className="text-text-secondary dark:text-text-dark_secondary">
-                      Loading more jobs...
-                    </span>
-                  </div>
-                )}
-
-                {/* End of results indicator */}
-                {!hasMorePages && !loadingMore && filteredJobs.length > 0 && (
-                  <div className="text-center py-8 border-t border-border dark:border-border-dark">
-                    <p className="text-text-tertiary dark:text-text-dark_tertiary">
-                      You've reached the end! No more jobs to load.
-                    </p>
-                  </div>
-                )}
               </>
             ) : (
-              <div className="text-center py-12 border border-border dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark">
-                <p className="text-text-secondary dark:text-text-dark_secondary">
-                  No jobs found matching your criteria. Try adjusting your
-                  search.
+              <div className="text-center py-12 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                <p className="text-gray-600 dark:text-gray-400">
+                  No job recommendations found. Try updating your profile or
+                  skills.
                 </p>
               </div>
             )}
@@ -496,7 +695,48 @@ const RemoteJobList = () => {
           <div className="hidden lg:block">
             <div className="bg-surface dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-lg p-5 sticky top-20">
               <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-4">
-                Popular Job Categories
+                Your Profile Summary
+              </h3>
+
+              {userProfile && (
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Preferred Role
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {userProfile.preferedJobType}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Location
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {userProfile.preferedLocation}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Key Skills
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {userProfile.keySkills}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Availability
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {userProfile.availabilityToWork}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-4">
+                Job Categories
               </h3>
 
               {/* Scrollable Categories Container */}
@@ -524,7 +764,7 @@ const RemoteJobList = () => {
 
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-4">
-                  Job Search Tips
+                  Recommendation Tips
                 </h3>
                 <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
                   <li className="flex items-start gap-2">
@@ -532,22 +772,25 @@ const RemoteJobList = () => {
                       <span className="text-xs">1</span>
                     </div>
                     <span>
-                      Update your resume with relevant skills and experiences
+                      Higher match scores indicate better alignment with your
+                      profile
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5">
                       <span className="text-xs">2</span>
                     </div>
-                    <span>Use specific keywords from the job description</span>
+                    <span>
+                      Keep your skills and preferences updated for better
+                      matches
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5">
                       <span className="text-xs">3</span>
                     </div>
                     <span>
-                      Research companies before applying to tailor your
-                      application
+                      AI considers your education, experience, and preferences
                     </span>
                   </li>
                 </ul>
@@ -561,9 +804,10 @@ const RemoteJobList = () => {
       <div className="bg-surface dark:bg-surface-dark border-t border-border dark:border-border-dark mt-8">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="text-center text-text-tertiary dark:text-text-dark_tertiary text-sm">
-            <p>© 2025 Remote Job Board. All rights reserved.</p>
+            <p>© 2025 AI Job Recommender. All rights reserved.</p>
             <p className="mt-2">
-              Find the best remote opportunities worldwide.
+              Powered by advanced machine learning for personalized job
+              matching.
             </p>
           </div>
         </div>

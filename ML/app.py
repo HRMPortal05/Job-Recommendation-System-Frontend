@@ -89,7 +89,7 @@ def normalize_job_data(jobs):
                 'category': str(job.get('category') or job.get('job_category') or job.get('department') or ''),
                 'tags': job.get('tags') or job.get('skills') or job.get('keywords', []),
                 'job_type': str(job.get('job_type') or job.get('employment_type') or job.get('type') or ''),
-                'publication_date': str(job.get('publication_date') or job.get('posted_date') or job.get('created_at') or ''),
+                'publication_date': str(job.get('publication_date') or job.get('posted_date') or job.get('updated_at') or ''),
                 'candidate_required_location': str(job.get('candidate_required_location') or job.get('location') or job.get('city') or ''),
                 'description': str(job.get('description') or job.get('job_description') or job.get('details', '') or ''),
                 'salary': str(job.get('salary') or job.get('salary_range') or ''),

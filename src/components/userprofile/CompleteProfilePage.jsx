@@ -117,8 +117,6 @@ const CompleteProfilePage = () => {
   const fetchMainData = async () => {
     setIsLoading(true);
 
-    console.log(uid);
-
     try {
       const response = await axios.get(
         `${
