@@ -1,0 +1,12 @@
+*.pyc
+__pycache__
+*.ipynb
+*.log
+venv/
+.git/
+.env
+tests/
+model_weights/
+cache/
+*.pt
+*.bin
