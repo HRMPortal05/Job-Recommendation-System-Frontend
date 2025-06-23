@@ -51,6 +51,8 @@ chrome-user-data
 
 .env
 
+ML/venv
+
 **/node_modules
 node_modules/
 
