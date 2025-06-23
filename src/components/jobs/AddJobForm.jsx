@@ -375,7 +375,7 @@ const AddJobForm = () => {
       });
 
       // Navigate to appropriate page after success
-      navigate("joblist?job=&location=");
+      navigate("/joblist?job=&location=");
     } catch (err) {
       enqueueSnackbar("Failed to create job", {
         variant: "error",
