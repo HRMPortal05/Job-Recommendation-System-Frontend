@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import requests
 import json
-from model import JobRecommendationTransformer  # Ensure this module exists
+from model import JobRecommendationTransformer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -101,23 +101,28 @@ def normalize_job_data(jobs):
             # Handle tags formatting
             if isinstance(normalized_job['tags'], str):
                 try:
+                    # Attempt to parse JSON-encoded string
                     parsed_tags = json.loads(normalized_job['tags'])
                     if isinstance(parsed_tags, list):
+                        # Clean and join tags into a single string
                         cleaned_tags = [str(tag).strip('[]"') for tag in parsed_tags if tag]
                         normalized_job['tags'] = [', '.join(cleaned_tags)] if cleaned_tags else []
                     else:
                         logger.warning(f"Parsed tags is not a list: {parsed_tags}")
                         normalized_job['tags'] = [normalized_job['tags'].strip('[]').replace('"', '')]
                 except json.JSONDecodeError:
+                    # Handle non-JSON string (e.g., comma-separated)
                     cleaned_tags = [tag.strip('[]"') for tag in normalized_job['tags'].split(',') if tag.strip('[]"')]
                     normalized_job['tags'] = [', '.join(cleaned_tags)] if cleaned_tags else []
             elif isinstance(normalized_job['tags'], list):
+                # Clean list elements and join into a single string
                 cleaned_tags = [str(tag).strip('[]"') for tag in normalized_job['tags'] if tag]
                 normalized_job['tags'] = [', '.join(cleaned_tags)] if cleaned_tags else []
             else:
                 logger.warning(f"Unexpected tags format: {normalized_job['tags']}")
                 normalized_job['tags'] = []
             
+            # Log job details for debugging
             if not normalized_job['id'] or normalized_job['title'] == 'Unknown Job':
                 logger.warning(f"Job missing id or title: {normalized_job}")
             normalized_jobs.append(normalized_job)
@@ -230,12 +235,11 @@ def recommend_jobs():
                 'company_name': 'Fallback Inc.',
                 'category': 'Software Development',
                 'tags': ['java', 'springboot', 'postgresql'],
-                    'job_type': 'Full-Time',
-                    'candidate_required_location': 'Bangalore',
-                    'description': 'Develop Java-based applications using Springboot and PostgreSQL.',
-                    'remote_allowed': False
-                }
-            ])
+                'job_type': 'Full-Time',
+                'candidate_required_location': 'Bangalore',
+                'description': 'Develop Java-based applications using Springboot and PostgreSQL.',
+                'remote_allowed': False
+            }])
         
         logger.info(f"Normalized {len(jobs_data)} jobs for recommendation")
         resume_url = user_data.get('users', {}).get('resumeUrl', '') or user_data.get('resumeUrl', '')
@@ -263,7 +267,7 @@ def recommend_jobs():
                 "job_type": job.get('job_type'),
                 "tags": job.get('tags', []),
                 "publication_date": job.get('publication_date'),
-                "description": job.get('description', ''),
+                "description": job.get('description', ''),  # Full-length description
                 "salary": job.get('salary'),
                 "experience_required": job.get('experience_required'),
                 "application_url": job.get('application_url'),
@@ -335,5 +339,13 @@ def internal_error(error):
         "message": "An unexpected error occurred"
     }, 500)
 
-# Export the Flask app for Vercel
-gunicorn_app = app
+if __name__ == '__main__':
+    # For local development only
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    logger.info(f"Starting Job Recommendation API server on port {port}")
+    logger.info(f"External Job API: {os.environ.get('EXTERNAL_JOB_API_URL', 'Not configured')}")
+    app.run(host='0.0.0.0', port=port, debug=debug)
+else:
+    # For production with gunicorn
+    gunicorn_app = app
