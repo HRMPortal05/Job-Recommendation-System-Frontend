@@ -24,7 +24,7 @@ export const requestNotificationPermission = async () => {
   try {
     // Check if notifications and service workers are supported
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      alert("Notifications or Service Workers not supported");
+      console.error("Notifications or Service Workers not supported");
       return null;
     }
 
