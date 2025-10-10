@@ -393,13 +393,22 @@ const Navbar = () => {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-4 md:space-x-6 lg:space-x-6">
-              <button
-                onClick={() => navigate("/ats-score")}
-                className="hidden md:flex items-center space-x-2 text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
-              >
+              <div className="hidden md:flex items-center space-x-2 text-primary dark:text-primary-400 transition-colors">
                 <FileUser className="h-4 w-4" />
-                <span>Check Your Score</span>
-              </button>
+                <span
+                  className="cursor-pointer hover:text-primary-700 dark:hover:text-primary-300 "
+                  onClick={() => navigate("/ats-score")}
+                >
+                  Check Your Score
+                </span>{" "}
+                {" / "}
+                <span
+                  className="cursor-pointer hover:text-primary-700 dark:hover:text-primary-300 "
+                  onClick={() => navigate("/resume")}
+                >
+                  Create Resume
+                </span>
+              </div>
               {!localStorage.getItem("token") && (
                 <button
                   onClick={() => openLogin()}
@@ -461,9 +470,21 @@ const Navbar = () => {
               </div>
 
               <div className="mt-4 px-4 space-y-1 mb-12 border-t border-border dark:border-border-dark py-4">
-                <button className="w-full flex items-center justify-center space-x-2 text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors py-2">
+                <button className="w-full flex items-center justify-center space-x-2 text-primary dark:text-primary-400 transition-colors py-2">
                   <FileUser className="h-4 w-4" />
-                  <span>Check Your Score</span>
+                  <span
+                    className="cursor-pointer hover:text-primary-700 dark:hover:text-primary-300 "
+                    onClick={() => navigate("/ats-score")}
+                  >
+                    Check Your Score
+                  </span>{" "}
+                  {" / "}
+                  <span
+                    className="cursor-pointer hover:text-primary-700 dark:hover:text-primary-300 "
+                    onClick={() => navigate("/resume")}
+                  >
+                    Create Resume
+                  </span>
                 </button>
                 {!localStorage.getItem("token") && (
                   <button

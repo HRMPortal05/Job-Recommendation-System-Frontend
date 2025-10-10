@@ -15,6 +15,7 @@ import RemoteJobList from "./components/jobs/RemoteJobList.jsx";
 import ResumeATSChecker from "./components/atschecker/ResumeATSChecker.jsx";
 import CompanyJobsPage from "./components/jobs/CompanyJobsPage.jsx";
 import JobApplicationsPage from "./components/jobs/JobApplicationsPage.jsx";
+import ResumeBuilder from "./components/resume/ResumeBuilder.jsx";
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
       { path: "ats-score", element: <ResumeATSChecker /> },
       { path: "your_jobs", element: <CompanyJobsPage /> },
       { path: "your_applications", element: <JobApplicationsPage /> },
+      { path: "resume", element: <ResumeBuilder /> },
     ],
   },
   {
