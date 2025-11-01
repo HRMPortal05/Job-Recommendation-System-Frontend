@@ -123,8 +123,6 @@ const RemoteJobList = () => {
         }
       );
 
-      console.log(response);
-
       if (response.data && response.data.recommendations) {
         setJobsData(response.data.recommendations);
         // Save to cache
