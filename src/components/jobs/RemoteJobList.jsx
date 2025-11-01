@@ -123,6 +123,8 @@ const RemoteJobList = () => {
         }
       );
 
+      console.log(response);
+
       if (response.data && response.data.recommendations) {
         setJobsData(response.data.recommendations);
         // Save to cache
@@ -666,7 +668,7 @@ const RemoteJobList = () => {
                             {/* Apply button */}
                             <div className="flex justify-end">
                               <a
-                                href={job.application_url || "#"}
+                                href={"#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium"
